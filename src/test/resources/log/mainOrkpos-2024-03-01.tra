@@ -1,0 +1,1278 @@
+[I 2024-03-01 13:02:19.751 consts:484] PSP_VAR_PTS_COUPON [u'9832']
+[I 2024-03-01 13:02:19.751 consts:485] PSP_VAR_PTS_COUPON_LEN 13
+[I 2024-03-01 13:02:19.751 consts:486] PSP_FIX_COUPON_ACTIONS [29944, {u'active': 1}, {u'active': 0}]
+[I 2024-03-01 13:02:19.751 consts:487] PSP_VAR_COUPON_ACTIONS [29945, {u'active': 1}, {u'active': 0}]
+[I 2024-03-01 13:02:19.771 service_logger:46] CHECK_ACTION - Log for the check_action module saved in /home/orka/Appli/Trace/check_action/check_action_module.log
+[I 2024-03-01 13:02:19.789 service_logger:46] TIME - Log for the time module saved in /home/orka/Appli/Trace/orkpos//time.log
+[I 2024-03-01 13:02:19.827 service_logger:46] CASHMANAGER - Log for the cashmanager module saved in /home/orka/Appli/Trace/cashmanager/cashmanager_module.log
+[I 2024-03-01 13:02:19.836 service_logger:46] FISCAL - Log for the fiscal module saved in /home/orka/Appli/Trace/fiscal/fiscal_module.log
+[I 2024-03-01 13:02:19.898 service_logger:46] PHARMA - Log for the pharma module saved in /home/orka/Appli/Trace/pharma/pharma_module.log
+[I 2024-03-01 13:02:19.903 maskcodeservice:19] Initialiaze maskCodesService
+[I 2024-03-01 13:02:19.932 devices:44] Load device configuration from /home/orka/Appli/Drivers/cfg/posdev-c2.json
+[I 2024-03-01 13:02:19.932 devices:64] Device configuration >> {'PRINTER': 'PRINTER_JAVAPOS', 'TONE': 'TONE_JAVAPOS', 'SCANNER': 'SCANNER_JAVAPOS', 'MSR': 'MSR_JAVAPOS', 'DRAWER': 'DRAWER_JAVAPOS', 'DISPLAY': 'DISPLAY_JAVAPOS'}
+[I 2024-03-01 13:02:19.933 regeanservice:10] Initialize RegeanService
+[I 2024-03-01 13:02:19.934 receiptmessageservice:88] Initialize ReceiptMessageService
+[I 2024-03-01 13:02:19.936 scale:44] get_scale_conf {'scale_host': 'sorkaisse', 'scale_port': '30030', 'scale_req_timeout': '2.5', 'scale_con_timeout': '2.0', 'scale_dep_arts': '{"5":"805","6":"806","9":"2026610"}'}
+[I 2024-03-01 13:02:21.966 service_logger:46] WEPTS - Log for the wepts module saved in /home/orka/Appli/Trace/wepts/wepts.log
+[I 2024-03-01 13:02:21.987 service_logger:46] TRANSLATION - Log for the translation module saved in /home/orka/Appli/Trace/translation/translation_module.log
+[I 2024-03-01 13:02:21.997 redemptionpromoservice:40] S - get_params_redemption_promo
+[I 2024-03-01 13:02:22.001 translationservice:24] Initialize TranslationService
+[I 2024-03-01 13:02:22.008 buttonstreeservice:21] Initialize ButtonsTreeService
+[I 2024-03-01 13:02:22.009 buttonstreeservice:36] getIdmenu(idmenu=2)
+[I 2024-03-01 13:02:22.009 buttonstreeservice:130] WITH RECURSIVE menu_tree (idmenu, idbtn, level, parent_node_id,children, description, ean, seq, color)
+                AS (
+                  SELECT
+                    idmenu,
+                    idbtn,
+                    0,
+                    parent_node_id,
+                    children,
+                    description,
+                    ean,
+                    seq,
+                    color.name as color,
+                    extra_data->>'image' as image,
+                    extra_data->>'class' as class,
+                    extra_data->>'fnc' as fnc,
+                    extra_data->>'description2' as description2,
+                    extra_data->>'column' as column,
+                    extra_data as extra
+                  FROM 
+                    cli_menu_buttons, 
+                    cli_ui_color as color
+                  WHERE 
+                    parent_node_id is NULL 
+                    and idmenu = 2 
+                    and cli_menu_buttons.idclr = color.idclr
+                  UNION ALL
+                  SELECT
+                    mn.idmenu,
+                    mn.idbtn,
+                    mt.level + 1,
+                    mt.idbtn ,
+                    array_append(mn.children,  json_build_object('children', (
+                        SELECT json_agg(s) from (
+                            select 
+                                idmenu, 
+                                idbtn, 
+                                parent_node_id, 
+                                children, 
+                                description, 
+                                ean, 
+                                seq, 
+                                color.name as color,
+                                extra_data->>'image' as image,
+                                extra_data->>'class' as class,
+                                extra_data->>'fnc' as fnc,
+                                extra_data->>'description2' as description2,
+                                extra_data->>'column' as column,
+                                extra_data as extra
+                            from 
+                                cli_menu_buttons, 
+                                cli_ui_color as color 
+                            where 
+                                mn.idbtn = cli_menu_buttons.parent_node_id 
+                                and mn.idmenu = cli_menu_buttons.idmenu
+                                and cli_menu_buttons.idclr = color.idclr 
+                                and cli_menu_buttons.idmenu = 2
+                            ORDER by seq
+                        ) as s
+                    ) )),
+                    mn.description,
+                    mn.ean,
+                    mn.seq,
+                    color.name,
+                    mn.extra_data->>'image' as image,
+                    mn.extra_data->>'class' as class,
+                    mn.extra_data->>'fnc' as fnc,
+                    extra_data->>'description2' as description2,
+                    extra_data->>'column' as column,
+                    extra_data as extra
+                  FROM 
+                    cli_menu_buttons mn, 
+                    menu_tree mt, 
+                    cli_ui_color as color
+                  WHERE mn.idmenu = 2  
+                    and mt.idmenu = mn.idmenu 
+                    and mt.idbtn =  mn.parent_node_id
+                    and mn.idclr = color.idclr
+                )
+                SELECT * FROM menu_tree
+                WHERE level > 0 and idmenu = 2
+                ORDER BY level, parent_node_id,seq;
+                
+[I 2024-03-01 13:02:22.010 buttonstreeservice:21] Initialize ButtonsTreeService
+[I 2024-03-01 13:02:22.010 buttonstreeservice:36] getIdmenu(idmenu=10)
+[I 2024-03-01 13:02:22.010 buttonstreeservice:130] WITH RECURSIVE menu_tree (idmenu, idbtn, level, parent_node_id,children, description, ean, seq, color)
+                AS (
+                  SELECT
+                    idmenu,
+                    idbtn,
+                    0,
+                    parent_node_id,
+                    children,
+                    description,
+                    ean,
+                    seq,
+                    color.name as color,
+                    extra_data->>'image' as image,
+                    extra_data->>'class' as class,
+                    extra_data->>'fnc' as fnc,
+                    extra_data->>'description2' as description2,
+                    extra_data->>'column' as column,
+                    extra_data as extra
+                  FROM 
+                    cli_menu_buttons, 
+                    cli_ui_color as color
+                  WHERE 
+                    parent_node_id is NULL 
+                    and idmenu = 10 
+                    and cli_menu_buttons.idclr = color.idclr
+                  UNION ALL
+                  SELECT
+                    mn.idmenu,
+                    mn.idbtn,
+                    mt.level + 1,
+                    mt.idbtn ,
+                    array_append(mn.children,  json_build_object('children', (
+                        SELECT json_agg(s) from (
+                            select 
+                                idmenu, 
+                                idbtn, 
+                                parent_node_id, 
+                                children, 
+                                description, 
+                                ean, 
+                                seq, 
+                                color.name as color,
+                                extra_data->>'image' as image,
+                                extra_data->>'class' as class,
+                                extra_data->>'fnc' as fnc,
+                                extra_data->>'description2' as description2,
+                                extra_data->>'column' as column,
+                                extra_data as extra
+                            from 
+                                cli_menu_buttons, 
+                                cli_ui_color as color 
+                            where 
+                                mn.idbtn = cli_menu_buttons.parent_node_id 
+                                and mn.idmenu = cli_menu_buttons.idmenu
+                                and cli_menu_buttons.idclr = color.idclr 
+                                and cli_menu_buttons.idmenu = 10
+                            ORDER by seq
+                        ) as s
+                    ) )),
+                    mn.description,
+                    mn.ean,
+                    mn.seq,
+                    color.name,
+                    mn.extra_data->>'image' as image,
+                    mn.extra_data->>'class' as class,
+                    mn.extra_data->>'fnc' as fnc,
+                    extra_data->>'description2' as description2,
+                    extra_data->>'column' as column,
+                    extra_data as extra
+                  FROM 
+                    cli_menu_buttons mn, 
+                    menu_tree mt, 
+                    cli_ui_color as color
+                  WHERE mn.idmenu = 10  
+                    and mt.idmenu = mn.idmenu 
+                    and mt.idbtn =  mn.parent_node_id
+                    and mn.idclr = color.idclr
+                )
+                SELECT * FROM menu_tree
+                WHERE level > 0 and idmenu = 10
+                ORDER BY level, parent_node_id,seq;
+                
+[I 2024-03-01 13:02:22.011 buttonstreeservice:21] Initialize ButtonsTreeService
+[I 2024-03-01 13:02:22.011 buttonstreeservice:36] getIdmenu(idmenu=11)
+[I 2024-03-01 13:02:22.011 buttonstreeservice:130] WITH RECURSIVE menu_tree (idmenu, idbtn, level, parent_node_id,children, description, ean, seq, color)
+                AS (
+                  SELECT
+                    idmenu,
+                    idbtn,
+                    0,
+                    parent_node_id,
+                    children,
+                    description,
+                    ean,
+                    seq,
+                    color.name as color,
+                    extra_data->>'image' as image,
+                    extra_data->>'class' as class,
+                    extra_data->>'fnc' as fnc,
+                    extra_data->>'description2' as description2,
+                    extra_data->>'column' as column,
+                    extra_data as extra
+                  FROM 
+                    cli_menu_buttons, 
+                    cli_ui_color as color
+                  WHERE 
+                    parent_node_id is NULL 
+                    and idmenu = 11 
+                    and cli_menu_buttons.idclr = color.idclr
+                  UNION ALL
+                  SELECT
+                    mn.idmenu,
+                    mn.idbtn,
+                    mt.level + 1,
+                    mt.idbtn ,
+                    array_append(mn.children,  json_build_object('children', (
+                        SELECT json_agg(s) from (
+                            select 
+                                idmenu, 
+                                idbtn, 
+                                parent_node_id, 
+                                children, 
+                                description, 
+                                ean, 
+                                seq, 
+                                color.name as color,
+                                extra_data->>'image' as image,
+                                extra_data->>'class' as class,
+                                extra_data->>'fnc' as fnc,
+                                extra_data->>'description2' as description2,
+                                extra_data->>'column' as column,
+                                extra_data as extra
+                            from 
+                                cli_menu_buttons, 
+                                cli_ui_color as color 
+                            where 
+                                mn.idbtn = cli_menu_buttons.parent_node_id 
+                                and mn.idmenu = cli_menu_buttons.idmenu
+                                and cli_menu_buttons.idclr = color.idclr 
+                                and cli_menu_buttons.idmenu = 11
+                            ORDER by seq
+                        ) as s
+                    ) )),
+                    mn.description,
+                    mn.ean,
+                    mn.seq,
+                    color.name,
+                    mn.extra_data->>'image' as image,
+                    mn.extra_data->>'class' as class,
+                    mn.extra_data->>'fnc' as fnc,
+                    extra_data->>'description2' as description2,
+                    extra_data->>'column' as column,
+                    extra_data as extra
+                  FROM 
+                    cli_menu_buttons mn, 
+                    menu_tree mt, 
+                    cli_ui_color as color
+                  WHERE mn.idmenu = 11  
+                    and mt.idmenu = mn.idmenu 
+                    and mt.idbtn =  mn.parent_node_id
+                    and mn.idclr = color.idclr
+                )
+                SELECT * FROM menu_tree
+                WHERE level > 0 and idmenu = 11
+                ORDER BY level, parent_node_id,seq;
+                
+[I 2024-03-01 13:02:22.012 posuiservice:445] S - get_pos_params
+[I 2024-03-01 13:02:22.013 posuiservice:457] {'pos-type': {'cashless': True, 'uxversion': 1, 'typology': 'esselunga', 'pos': 'std'}}
+[I 2024-03-01 13:02:22.013 posuiservice:489] S - get_ux_json {'pos-type': {'cashless': True, 'uxversion': 1, 'typology': 'esselunga', 'pos': 'std'}}
+[I 2024-03-01 13:02:22.022 posuiservice:501] S - get_ux_params
+[I 2024-03-01 13:02:22.036 depositservice:28] Initialize DepositService
+[I 2024-03-01 13:02:22.039 service_logger:46] AUTODEPOSIT - Log for the autodeposit module saved in /home/orka/Appli/Trace/autodeposit/autodeposit_module.log
+[I 2024-03-01 13:02:22.040 service_logger:46] REPORT - Log for the report module saved in /home/orka/Appli/Trace/report/report_module.log
+[I 2024-03-01 13:02:22.045 scale:44] get_scale_conf {'scale_host': 'sorkaisse', 'scale_port': '30030', 'scale_req_timeout': '2.5', 'scale_con_timeout': '2.0', 'scale_dep_arts': '{"5":"805","6":"806","9":"2026610"}'}
+[I 2024-03-01 13:02:22.312 functionservice:16] ****************************************
+[I 2024-03-01 13:02:22.313 functionservice:17]     Starting Function Service!
+[I 2024-03-01 13:02:22.313 functionservice:18] ****************************************
+[I 2024-03-01 13:02:22.316 service_logger:46] POSRFIDSERVICE - Log for the posrfidservice module saved in /home/orka/Appli/Trace/posrfidservice/posrfidservice_module.log
+[I 2024-03-01 13:02:22.316 translationservice:24] Initialize TranslationService
+[I 2024-03-01 13:02:22.335 mainOrkpos:431] Mode webservices actived
+[I 2024-03-01 13:02:22.335 mainOrkpos:434] Ascent options values :
+[I 2024-03-01 13:02:22.335 mainOrkpos:435]   reconciliation_interval : 30 minutes
+[I 2024-03-01 13:02:22.335 mainOrkpos:436]   ascent_interval   : 0.5 seconds
+[I 2024-03-01 13:02:22.335 mainOrkpos:437]   ascent_retry_interval   : 10.0 seconds
+[I 2024-03-01 13:02:22.336 mainOrkpos:438]   ascent_idle_sleep       : 1.0 seconds
+[I 2024-03-01 13:02:22.336 mainOrkpos:297] wait_engine_tables_ready
+[I 2024-03-01 13:02:24.634 mainOrkpos:185] generating empty .jtkt file if missing ...
+[I 2024-03-01 13:02:24.647 mainOrkpos:207] touch /home/orka/Appli/Jtkt/10034_2_2024-03-01.jtkt
+[I 2024-03-01 13:02:24.647 mainOrkpos:89] create_s_jtkt
+[I 2024-03-01 13:02:24.648 mainOrkpos:354] patch_tables
+[I 2024-03-01 13:02:24.648 mainOrkpos:421] Initializing module params ...
+[I 2024-03-01 13:02:24.649 paramservice:29] initializing ParamService
+[I 2024-03-01 13:02:24.649 paramservice:38] pinging paramservice
+[I 2024-03-01 13:02:24.651 paramservice:40] paramservice available
+[I 2024-03-01 13:02:24.652 paramservice:70] Retrieving CDC names ...
+[I 2024-03-01 13:02:24.653 paramservice:80] Retrieving CDC params ...
+[I 2024-03-01 13:02:24.655 paramservice:43] paramservice initialized
+[I 2024-03-01 13:02:24.655 paramservice:295] save_cdc_names
+[I 2024-03-01 13:02:24.655 paramservice:298] Deleting previous cdcNames.json
+[I 2024-03-01 13:02:24.656 paramservice:301] Writing new cdcNames.json
+[I 2024-03-01 13:02:24.656 paramservice:308] save_cdc_params
+[I 2024-03-01 13:02:24.656 paramservice:311] Deleting previous cdcParams.json
+[I 2024-03-01 13:02:24.657 paramservice:314] Writing new cdcParams.json
+[I 2024-03-01 13:02:24.679 paramservice:396] Retrieving virtual stamps conversion params ...
+[I 2024-03-01 13:02:24.682 paramservice:407] get_params_virtual_stamps_conversion {'conversion-actions': [366951, {u'active': 1}, {u'active': 0}], 'blocked-actiontype': [23, {u'active': 1}, {u'active': 0}]}
+[I 2024-03-01 13:02:24.695 paramservice:503] last_minute_coupon_params: {'coupon': {u'active': 0, u'code': [u'5718'], u'len': 16}, 'enable-features': {u'active': 0, u'check-eans': True}, 'timeout': 2, 'urls': {u'check-eans': u'https://sorkaisse:11445/eans/check', u'reserve-coupon': u'https://sorkaisse:11445/coupon/make/reservation', u'burn-coupon': u'https://sorkaisse:11445/coupon/make/burn', u'manage-coupon': u'https://sorkaisse:11445/coupon/manage', u'delete-reservation': u'https://sorkaisse:11445/coupon/delete/reservation', u'delete-burn': u'https://sorkaisse:11445/coupon/delete/burn', u'active': 0}}
+[I 2024-03-01 13:02:24.695 paramservice:282] save_module_params
+[I 2024-03-01 13:02:24.695 paramservice:285] Deleting previous moduleParams.json
+[I 2024-03-01 13:02:24.696 paramservice:288] Writing new moduleParams.json
+[I 2024-03-01 13:02:24.697 mainOrkpos:214] loading translations ...
+[I 2024-03-01 13:02:24.733 rapidchoiceservice:24] Initialize RapidChoiceService
+[I 2024-03-01 13:02:24.733 menuservice:20] Initializing MenuService
+[I 2024-03-01 13:02:24.734 menuservice:35] initialize
+[I 2024-03-01 13:02:24.734 departmentservice:22] Initialize DepartmentService
+[I 2024-03-01 13:02:24.734 recalcticketservice:29] Initialize RecalcTicketService
+[I 2024-03-01 13:02:24.740 loginservice:19] Initialize LoginService
+[I 2024-03-01 13:02:24.740 buttonstreeservice:21] Initialize ButtonsTreeService
+[I 2024-03-01 13:02:24.741 buttonstreeservice:36] getIdmenu(idmenu=2)
+[I 2024-03-01 13:02:24.741 buttonstreeservice:130] WITH RECURSIVE menu_tree (idmenu, idbtn, level, parent_node_id,children, description, ean, seq, color)
+                AS (
+                  SELECT
+                    idmenu,
+                    idbtn,
+                    0,
+                    parent_node_id,
+                    children,
+                    description,
+                    ean,
+                    seq,
+                    color.name as color,
+                    extra_data->>'image' as image,
+                    extra_data->>'class' as class,
+                    extra_data->>'fnc' as fnc,
+                    extra_data->>'description2' as description2,
+                    extra_data->>'column' as column,
+                    extra_data as extra
+                  FROM 
+                    cli_menu_buttons, 
+                    cli_ui_color as color
+                  WHERE 
+                    parent_node_id is NULL 
+                    and idmenu = 2 
+                    and cli_menu_buttons.idclr = color.idclr
+                  UNION ALL
+                  SELECT
+                    mn.idmenu,
+                    mn.idbtn,
+                    mt.level + 1,
+                    mt.idbtn ,
+                    array_append(mn.children,  json_build_object('children', (
+                        SELECT json_agg(s) from (
+                            select 
+                                idmenu, 
+                                idbtn, 
+                                parent_node_id, 
+                                children, 
+                                description, 
+                                ean, 
+                                seq, 
+                                color.name as color,
+                                extra_data->>'image' as image,
+                                extra_data->>'class' as class,
+                                extra_data->>'fnc' as fnc,
+                                extra_data->>'description2' as description2,
+                                extra_data->>'column' as column,
+                                extra_data as extra
+                            from 
+                                cli_menu_buttons, 
+                                cli_ui_color as color 
+                            where 
+                                mn.idbtn = cli_menu_buttons.parent_node_id 
+                                and mn.idmenu = cli_menu_buttons.idmenu
+                                and cli_menu_buttons.idclr = color.idclr 
+                                and cli_menu_buttons.idmenu = 2
+                            ORDER by seq
+                        ) as s
+                    ) )),
+                    mn.description,
+                    mn.ean,
+                    mn.seq,
+                    color.name,
+                    mn.extra_data->>'image' as image,
+                    mn.extra_data->>'class' as class,
+                    mn.extra_data->>'fnc' as fnc,
+                    extra_data->>'description2' as description2,
+                    extra_data->>'column' as column,
+                    extra_data as extra
+                  FROM 
+                    cli_menu_buttons mn, 
+                    menu_tree mt, 
+                    cli_ui_color as color
+                  WHERE mn.idmenu = 2  
+                    and mt.idmenu = mn.idmenu 
+                    and mt.idbtn =  mn.parent_node_id
+                    and mn.idclr = color.idclr
+                )
+                SELECT * FROM menu_tree
+                WHERE level > 0 and idmenu = 2
+                ORDER BY level, parent_node_id,seq;
+                
+[I 2024-03-01 13:02:24.744 badgeverifierservice:18] Initialize BadgeVerifierService
+[I 2024-03-01 13:02:24.744 selfscanningservice:46] Initialize SelfScanningService
+[I 2024-03-01 13:02:24.745 itempremservice:30] Initialize ItempremService
+[I 2024-03-01 13:02:24.745 couponinfoservice:15] CouponInfoService
+[I 2024-03-01 13:02:24.745 checkarticleservice:39] Initialize checkArticleService
+[I 2024-03-01 13:02:24.746 messageencodeservice:19] Initialize MessageEncodeService
+[I 2024-03-01 13:02:24.746 messageencodeservice:29] initialize messages ntt
+[I 2024-03-01 13:02:24.747 lastminuteservice:22] Last Minute coupon LM_LEN 16 LM_CODE [u'5718']
+[I 2024-03-01 13:02:24.747 receiptmessageservice:88] Initialize ReceiptMessageService
+[I 2024-03-01 13:02:24.747 translationservice:24] Initialize TranslationService
+[E 2024-03-01 13:02:24.750 pgutils:547] 
+			select
+				distinct a_id.ean::bigint ean
+			from
+				f_act_fam fam
+				join a_int
+				on (
+					a_int.idint = fam.code or
+					a_int.idint = fam.eantnd
+				)
+				join a_id
+				on a_id.ean = a_int.ean
+			where
+				fam.idact in %(actions)s
+				and fam.dtf >= current_date
+		
+[E 2024-03-01 13:02:24.751 pgutils:548] can't adapt type 'dict'
+Traceback (most recent call last):
+  File "/home/orka/Appli/UI/orkpos5/orkpos/cli/services/checkarticleservice.py", line 62, in initialize
+    self.articles = yield self._load_linked_sell_articles()
+  File "/usr/local/lib/python2.7/dist-packages/tornado/gen.py", line 1055, in run
+    value = future.result()
+  File "/usr/local/lib/python2.7/dist-packages/tornado/concurrent.py", line 238, in result
+    raise_exc_info(self._exc_info)
+  File "/usr/local/lib/python2.7/dist-packages/tornado/gen.py", line 1069, in run
+    yielded = self.gen.send(value)
+  File "/home/orka/Appli/UI/orkpos5/orkpos/cli/services/checkarticleservice.py", line 98, in _load_linked_sell_articles
+    articles = {elem['ean']: elem for elem in result}
+TypeError: 'NoneType' object is not iterable
+[I 2024-03-01 13:02:24.758 lastminuteservice:22] Last Minute coupon LM_LEN 16 LM_CODE [u'5718']
+[I 2024-03-01 13:02:24.758 checkarticleservice:39] Initialize checkArticleService
+[I 2024-03-01 13:02:24.759 messageencodeservice:19] Initialize MessageEncodeService
+[I 2024-03-01 13:02:24.759 messageencodeservice:29] initialize messages ntt
+[I 2024-03-01 13:02:24.759 lastminuteservice:22] Last Minute coupon LM_LEN 16 LM_CODE [u'5718']
+[I 2024-03-01 13:02:24.767 messageencodeservice:19] Initialize MessageEncodeService
+[I 2024-03-01 13:02:24.767 messageencodeservice:29] initialize messages ntt
+[E 2024-03-01 13:02:24.768 pgutils:547] 
+			select
+				distinct a_id.ean::bigint ean
+			from
+				f_act_fam fam
+				join a_int
+				on (
+					a_int.idint = fam.code or
+					a_int.idint = fam.eantnd
+				)
+				join a_id
+				on a_id.ean = a_int.ean
+			where
+				fam.idact in %(actions)s
+				and fam.dtf >= current_date
+		
+[E 2024-03-01 13:02:24.769 pgutils:548] can't adapt type 'dict'
+Traceback (most recent call last):
+  File "/home/orka/Appli/UI/orkpos5/orkpos/cli/services/checkarticleservice.py", line 62, in initialize
+    self.articles = yield self._load_linked_sell_articles()
+  File "/usr/local/lib/python2.7/dist-packages/tornado/gen.py", line 1055, in run
+    value = future.result()
+  File "/usr/local/lib/python2.7/dist-packages/tornado/concurrent.py", line 238, in result
+    raise_exc_info(self._exc_info)
+  File "/usr/local/lib/python2.7/dist-packages/tornado/gen.py", line 1069, in run
+    yielded = self.gen.send(value)
+  File "/home/orka/Appli/UI/orkpos5/orkpos/cli/services/checkarticleservice.py", line 98, in _load_linked_sell_articles
+    articles = {elem['ean']: elem for elem in result}
+TypeError: 'NoneType' object is not iterable
+[I 2024-03-01 13:02:24.773 promoserviceengine:257] CONTEST_COUNTER 9280
+[I 2024-03-01 13:02:24.774 promoserviceengine:265] CONTEST_ALGORITHM 1
+[I 2024-03-01 13:02:24.775 uiclictrl:313] on_UI_CLI_SCO_REDIRECT_INPUT >> {}
+[I 2024-03-01 13:02:24.776 enginectrl:291] on_ENGINE_REDIRECT_INPUT_DATA_STOP_REQ({})
+[I 2024-03-01 13:02:24.777 enginectrl:271] on_ENGINE_REDIRECT_INPUT_DATA_START_REQ({'inputDataCallback': <bound method UICliComponent.verify_input of UICliComponent>})
+[I 2024-03-01 13:02:24.777 lightpoleservice:41] lightpole_red_on
+[I 2024-03-01 13:02:24.779 rereadscoservice:40] Initialize RereadSCOService...
+[I 2024-03-01 13:02:24.843 storesctrl:68] 11 receipted already aggregated.
+[I 2024-03-01 13:02:24.843 storesctrl:70]                 (1, 10034, '2024-03-01', 2, 278)
+[I 2024-03-01 13:02:24.844 storesctrl:70]                 (1, 10034, '2024-03-01', 2, 275)
+[I 2024-03-01 13:02:24.844 storesctrl:70]                 (1, 10034, '2024-03-01', 2, 280)
+[I 2024-03-01 13:02:24.844 storesctrl:70]                 (1, 10034, '2024-03-01', 2, 279)
+[I 2024-03-01 13:02:24.845 storesctrl:70]                 (1, 10034, '2024-03-01', 2, 272)
+[I 2024-03-01 13:02:24.845 storesctrl:70]                 (1, 10034, '2024-03-01', 2, 281)
+[I 2024-03-01 13:02:24.845 storesctrl:70]                 (1, 10034, '2024-03-01', 2, 271)
+[I 2024-03-01 13:02:24.845 storesctrl:70]                 (1, 10034, '2024-03-01', 2, 276)
+[I 2024-03-01 13:02:24.846 storesctrl:70]                 (1, 10034, '2024-03-01', 2, 273)
+[I 2024-03-01 13:02:24.846 storesctrl:70]                 (1, 10034, '2024-03-01', 2, 277)
+[I 2024-03-01 13:02:24.846 storesctrl:70]                 (1, 10034, '2024-03-01', 2, 274)
+[I 2024-03-01 13:02:24.853 storesctrl:88] today pay :: 7.98000000
+[I 2024-03-01 13:02:24.853 storesctrl:98] Turnover consolidation checked with success !
+[I 2024-03-01 13:02:24.859 servicesctrl:516] S - create_custom_tickets
+[I 2024-03-01 13:02:24.859 servicesctrl:531] Custom ticket in queue: 0, creation allowed: True
+[I 2024-03-01 13:02:24.859 mainOrkpos:398] Initializing the ascent manager ...
+[I 2024-03-01 13:02:24.860 websocketclient:62] Connection : url::ws://localhost:3333/ws
+[I 2024-03-01 13:02:24.869 enginectrl:111] on_EOT_REGISTER({'members': ['messages']})
+[I 2024-03-01 13:02:24.870 uiclictrl:850] on_EOT_REGISTER >> {'members': ['messages']}
+[I 2024-03-01 13:02:24.870 brokerctrl:47] on_RUN
+[I 2024-03-01 13:02:24.871 brokercnx:18] Connection to sorkaisse
+[I 2024-03-01 13:02:24.871 websocketclient:62] Connection : url::ws://sorkaisse:8889/broker/?role=pos&idens=1&idm=10034&idc=2
+[I 2024-03-01 13:02:24.872 enginectrl:111] on_EOT_REGISTER({'members': ['cashDrawer', 'printer', 'scanner']})
+[I 2024-03-01 13:02:24.872 uiclictrl:850] on_EOT_REGISTER >> {'members': ['cashDrawer', 'printer', 'scanner']}
+[I 2024-03-01 13:02:24.873 devicesctrl:309] connecting to JavaPOS device manager on host localhost port 7000 ...
+[I 2024-03-01 13:02:24.873 websocketclient:62] Connection : url::ws://localhost:7000/
+[I 2024-03-01 13:02:24.874 enginectrl:111] on_EOT_REGISTER({'members': ['receiptService']})
+[I 2024-03-01 13:02:24.875 uiclictrl:850] on_EOT_REGISTER >> {'members': ['receiptService']}
+[I 2024-03-01 13:02:24.877 receiptservice:49] engineConnected()
+[I 2024-03-01 13:02:24.878 receiptservice:75] setEngineConnected(connected=True)
+[I 2024-03-01 13:02:24.878 receiptservice:158] S - checkMessagesInQueue
+[I 2024-03-01 13:02:24.884 brokerctrl:59] on_BROKER_CONNECTION
+[I 2024-03-01 13:02:24.884 brokerctrl:62]  on_BROKER_CONNECTION not managed in webservices mode
+[I 2024-03-01 13:02:24.886 ascentmanager:648] Reconciliation interval is set to 30 minutes
+[E 2024-03-01 13:02:24.887 posHandler:668] ****************************** seq 1: action=info, key=, table=p_pcs, op=, bloc=, indice=, idcli=
+[E 2024-03-01 13:02:24.888 check_action_on_ticket_service:60] error on _check_cesta_and_home_delivery on resumed ticket
+[E 2024-03-01 13:02:24.889 posHandler:801] Sequence 2 not found in message
+[E 2024-03-01 13:02:24.890 posHandler:801] Sequence 3 not found in message
+[E 2024-03-01 13:02:24.890 posHandler:801] Sequence 4 not found in message
+[E 2024-03-01 13:02:24.890 posHandler:668] ****************************** seq 5: action=requestpos, key=, table=, op=, bloc=, indice=, idcli=
+[I 2024-03-01 13:02:24.891 messageencodeservice:37] [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']
+[I 2024-03-01 13:02:24.891 messageencodeservice:43] message not present in ntt table
+[I 2024-03-01 13:02:24.892 posHandler:1388] Update UI
+[I 2024-03-01 13:02:24.893 uiclictrl:1678] UI_CLI_REFRESH_UI
+[I 2024-03-01 13:02:24.894 uiclictrl:729] on_UI_CLI_POS_UNBLOCKED
+[I 2024-03-01 13:02:24.895 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': ['4Store', 'ESSELUNGA'], 'ch': 'boxInfo'}
+[I 2024-03-01 13:02:24.896 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']}
+[I 2024-03-01 13:02:24.897 uiclictrl:435] on_UI_CLI_CLEAR_INPUT
+[I 2024-03-01 13:02:24.899 uistore:58] on_UI_CLEAR_INPUT
+[I 2024-03-01 13:02:24.900 uiclictrl:1511] ENGINE_STATE {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 257, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 784, u'STYLECR': 784, u'idt': 281, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2}
+[I 2024-03-01 13:02:24.901 uiclictrl:1999] UI_CLI_UNLOCK_CONTEXT_UPDATE
+[I 2024-03-01 13:02:24.902 uiclictrl:4544] on_UI_SEND_TOTAL_ARTICLES
+[I 2024-03-01 13:02:24.903 uiclictrl:6181] on_UI_CLI_ACTIVATE_STD_BUTTONS
+[I 2024-03-01 13:02:24.904 posuiservice:630] ALTRI TOTALI {'ctx': 1, 'B.PASTO': Decimal('0'), 'B.CELIACHIA': Decimal('0')}
+[I 2024-03-01 13:02:24.905 posuiservice:616] _get_context_ux {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 257, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 784, u'STYLECR': 784, u'idt': 281, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2} - 2
+[I 2024-03-01 13:02:24.906 posuiservice:624] new ux context 999999
+[I 2024-03-01 13:02:24.907 posuiservice:608] S - _set_data_from_entry 999999
+[I 2024-03-01 13:02:24.908 uiclictrl:5923] on_UI_SEND_WS
+[I 2024-03-01 13:02:24.909 posuiservice:1714] is_card_already_in_use {}-None
+[I 2024-03-01 13:02:24.909 posHandler:1419] >> POS ask to ENABLE scanners <<
+[I 2024-03-01 13:02:24.910 devicesctrl:1192] DEVICE_ACTIVATE_SCANNERS
+[I 2024-03-01 13:02:24.911 devicesctrl:1193] scanners:-1
+[I 2024-03-01 13:02:24.911 devicesctrl:1194] badgeScanners:-1
+[I 2024-03-01 13:02:24.912 devicesctrl:1196] __cashDrawerStatus -1
+[I 2024-03-01 13:02:24.912 devicesctrl:1197] __cashDrawerStatusForPOS -1
+[I 2024-03-01 13:02:24.913 devicesctrl:1165] DEVICE_DESACTIVATE_BADGE_SCANNERS
+[I 2024-03-01 13:02:24.914 devicesctrl:1166] scanners:-1
+[I 2024-03-01 13:02:24.915 devicesctrl:1167] badgeScanners:-1
+[I 2024-03-01 13:02:24.915 posHandler:1467] Call RECEIPT_CHANGED
+[I 2024-03-01 13:02:24.916 uistore:424] on_RECEIPT_CHANGED({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f371666dc20>})
+[I 2024-03-01 13:02:24.917 uistore:386] SEND_CURRENT_RECEIPT({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f371666dc20>})
+[I 2024-03-01 13:02:24.917 posHandler:1469] Call REFRESH_CUSTOMER_DISPLAY
+[I 2024-03-01 13:02:24.918 devicesctrl:396] Unabled to display the lines
+[I 2024-03-01 13:02:24.926 ascentmanager:676] [RECONCILIATION STARTED] master sorkaisse:8889/orkaisse, fiscal date 2024-03-01,  11 receipts
+[I 2024-03-01 13:02:24.939 ascentmanager:699] [RECONCILIATION FINISHED] master sorkaisse:8889/orkaisse, fiscal date 2024-03-01, 11 total receipts, 0 missing receipts.
+[I 2024-03-01 13:02:24.958 devicesctrl:66] on_connection_success : JAVAPOS
+[I 2024-03-01 13:02:24.958 devicesctrl:96] REFRESH_CUSTOMER_DISPLAY_REQ from _on_connection_success JAVAPOS
+[I 2024-03-01 13:02:24.959 enginectrl:235] on_REFRESH_CUSTOMER_DISPLAY_REQ(...)
+[I 2024-03-01 13:02:24.959 devicesctrl:100] end _on_connection_success
+[I 2024-03-01 13:02:24.996 devicesctrl:185] WebSocketJPOS javapos on_message {u'status': 0, u'stateLabel': u'', u'deviceModel': u'CashDrawer', u'rawStatus': -1, u'state': 1, u'statusLabel': u'', u'deviceType': u'CashDrawer', u'deviceId': 0, u'taskId': u'', u'rawStatusLabel': u'', u'deviceLogicalName': u'CashDrawer'}, localhost
+[I 2024-03-01 13:02:24.997 enginectrl:488] DEVICE_DRAWER_STATUS({u'status': 0, u'stateLabel': u'', u'deviceModel': u'CashDrawer', u'rawStatus': -1, u'state': 1, u'statusLabel': u'', u'deviceType': u'CashDrawer', u'deviceId': 0, u'taskId': u'', u'rawStatusLabel': u'', u'deviceLogicalName': u'CashDrawer'})
+[I 2024-03-01 13:02:24.997 devicesctrl:402] on_DEVICE_DRAWER_STATUS({u'status': 0, u'stateLabel': u'', u'deviceModel': u'CashDrawer', u'rawStatus': -1, u'state': 1, u'statusLabel': u'', u'deviceType': u'CashDrawer', u'deviceId': 0, u'taskId': u'', u'rawStatusLabel': u'', u'deviceLogicalName': u'CashDrawer'})
+[I 2024-03-01 13:02:24.998 enginectrl:111] on_EOT_REGISTER({'members': ['cashDrawer']})
+[I 2024-03-01 13:02:24.999 uiclictrl:850] on_EOT_REGISTER >> {'members': ['cashDrawer']}
+[I 2024-03-01 13:02:24.999 devicesctrl:433] POS not already blocked by CashDrawer
+[I 2024-03-01 13:02:25.027 devicesctrl:185] WebSocketJPOS javapos on_message {u'status': 0, u'stateLabel': u'', u'deviceModel': u'POSPrinter', u'rawStatus': -1, u'state': 2, u'statusLabel': u'', u'deviceType': u'Printer', u'deviceId': 0, u'taskId': u'', u'rawStatusLabel': u'', u'deviceLogicalName': u'POSPrinter'}, localhost
+[I 2024-03-01 13:02:25.027 devicesctrl:567] on_DEVICE_PRINTER_STATUS({u'status': 0, u'stateLabel': u'', u'deviceModel': u'POSPrinter', u'rawStatus': -1, u'state': 2, u'statusLabel': u'', u'deviceType': u'Printer', u'deviceId': 0, u'taskId': u'', u'rawStatusLabel': u'', u'deviceLogicalName': u'POSPrinter'})
+[I 2024-03-01 13:02:25.028 devicesctrl:598] [PRINTER] ready (0)
+[I 2024-03-01 13:02:25.257 web:2064] 304 GET / (10.118.3.121) 9.74ms
+[I 2024-03-01 13:02:25.502 web:2064] 200 GET /static/app/_shared/img/4store.png?v=1709294552663 (10.118.3.121) 1.80ms
+[W 2024-03-01 13:02:25.561 web:2064] 404 GET /static/app/_shared/img/cash_img/FIR.jpg (10.118.3.121) 0.92ms
+[W 2024-03-01 13:02:25.562 web:2064] 404 GET /static/app/_shared/img/cash_img/RIR.jpg (10.118.3.121) 0.31ms
+[W 2024-03-01 13:02:25.562 web:2064] 404 GET /static/app/_shared/img/cash_img/R.jpg (10.118.3.121) 0.30ms
+[W 2024-03-01 13:02:25.563 web:2064] 404 GET /static/app/_shared/img/cash_img/F.jpg (10.118.3.121) 0.30ms
+[I 2024-03-01 13:02:25.987 web:2064] 200 GET / (127.0.0.1) 8.99ms
+[I 2024-03-01 13:02:25.996 web:2064] 200 GET /static/app/_shared/css/font-awesome.css?v=a16730221cf9c8b1bad3dd5419edf16b (127.0.0.1) 2.26ms
+[I 2024-03-01 13:02:25.997 web:2064] 200 GET /static/app/_shared/css/tags-style.css?v=1a519bd00eda0f4685469385fb218041 (127.0.0.1) 1.06ms
+[I 2024-03-01 13:02:25.999 web:2064] 200 GET /static/libs/vendor/riot/riot+compiler-2.6.7.min.js?v=c8b31e7adc3a706f76da00640b81abe8 (127.0.0.1) 1.47ms
+[I 2024-03-01 13:02:26.000 web:2064] 200 GET /static/libs/vendor/riot/riotcontrol.js?v=6711ff7ca3de21a5da2de1cb1a910219 (127.0.0.1) 0.51ms
+[I 2024-03-01 13:02:26.001 web:2064] 200 GET /static/libs/vendor/sprint.min.js?v=8ba400fd2f6308006fb58f5791bc712b (127.0.0.1) 0.82ms
+[I 2024-03-01 13:02:26.002 web:2064] 200 GET /static/app/_shared/css/style.css?v=21449197caad07949bc6cf0de7041e24 (127.0.0.1) 0.86ms
+[I 2024-03-01 13:02:26.003 web:2064] 200 GET /static/libs/nttdata/utils.js?v=3e2be26eefb1a6bee2ea1f7c44cbd2f6 (127.0.0.1) 0.52ms
+[I 2024-03-01 13:02:26.004 web:2064] 200 GET /static/libs/pos/posConsts.js?v=ab25673ca226032474e4cc02d7e4a93c (127.0.0.1) 0.68ms
+[I 2024-03-01 13:02:26.005 web:2064] 200 GET /static/libs/pos/posCore.js?v=d48874e6096ed6aede16bf98cc234b2f (127.0.0.1) 0.64ms
+[I 2024-03-01 13:02:26.006 web:2064] 200 GET /static/libs/pos/posLib.js?v=a197b581007495c51f5569f5f6b5fd00 (127.0.0.1) 0.63ms
+[I 2024-03-01 13:02:26.008 web:2064] 200 GET /static/libs/pos/posStore.js?v=b3dcd0e416256bada664437ac31e1ceb (127.0.0.1) 1.54ms
+[I 2024-03-01 13:02:26.009 web:2064] 200 GET /static/libs/nttdata/nttConsts.js?v=f89de3f0eb2b488633f382fe83752453 (127.0.0.1) 0.60ms
+[I 2024-03-01 13:02:26.009 web:2064] 200 GET /static/libs/nttdata/nttContext.js?v=b43729dc61428e2e3e3cff998d3e1816 (127.0.0.1) 0.55ms
+[I 2024-03-01 13:02:26.011 web:2064] 200 GET /static/libs/nttdata/nttLib.js?v=e801b9d3f03ec61f127f4401bd4de260 (127.0.0.1) 0.89ms
+[I 2024-03-01 13:02:26.011 web:2064] 200 GET /static/app/_shared/js/std.js?v=d41d8cd98f00b204e9800998ecf8427e (127.0.0.1) 0.34ms
+[I 2024-03-01 13:02:26.012 web:2064] 200 GET /static/libs/nttdata/nttActions.js?v=1a6a166a669dff1facb745e8987452c9 (127.0.0.1) 0.67ms
+[I 2024-03-01 13:02:26.023 web:2064] 200 GET /static/app/components/page/page-switchpos.tag?v=509ccb47a44df8672e6ec43f70288c8d (127.0.0.1) 0.55ms
+[I 2024-03-01 13:02:26.024 web:2064] 200 GET /static/app/components/basic/button-next.tag?v=6f5d38bfe709e0459bbce5c997aa65bd (127.0.0.1) 0.39ms
+[I 2024-03-01 13:02:26.024 web:2064] 200 GET /static/app/components/basic/button-back.tag?v=8933c45e6f4957a82eab7a66d8280061 (127.0.0.1) 0.38ms
+[I 2024-03-01 13:02:26.025 web:2064] 200 GET /static/app/components/box/2-box-connection-eft.tag?v=0813dd4b5e7a6a7c78167e117a544a07 (127.0.0.1) 0.38ms
+[I 2024-03-01 13:02:26.026 web:2064] 200 GET /static/app/components/box/1-box-connection-server.tag?v=c2c78d2d73ce76860597ab5454057b86 (127.0.0.1) 0.39ms
+[I 2024-03-01 13:02:26.026 web:2064] 200 GET /static/app/components/basic/raw.tag?v=a1fe55fd3a2dfbd35678d7ad84f07408 (127.0.0.1) 0.43ms
+[I 2024-03-01 13:02:26.032 web:2064] 200 GET /static/app/components/box/3-box-connection-pinpad.tag?v=c59a23e35657e689c6a80654cdddfe12 (127.0.0.1) 0.53ms
+[I 2024-03-01 13:02:26.033 web:2064] 200 GET /static/app/components/box/4-box-connection-adapter.tag?v=737b9c6756df26d462fdc75a107c3985 (127.0.0.1) 0.44ms
+[I 2024-03-01 13:02:26.033 web:2064] 200 GET /static/app/components/help/help-contentA.tag?v=93450f4ebc8361f7d2a50f3ae89f1aee (127.0.0.1) 0.41ms
+[I 2024-03-01 13:02:26.034 web:2064] 200 GET /static/app/components/box/6-box-information.tag?v=ec2a7293a16e705a189605de2dfa2dad (127.0.0.1) 0.38ms
+[I 2024-03-01 13:02:26.034 web:2064] 200 GET /static/app/components/box/9-box-infototal-group.tag?v=74df636e20d5c47d2e0bbe5cb29251fa (127.0.0.1) 0.36ms
+[I 2024-03-01 13:02:26.035 web:2064] 200 GET /static/app/components/box/7-box-display-messages.tag?v=cedf0047a5a5516d4575974ae5b31e90 (127.0.0.1) 0.36ms
+[I 2024-03-01 13:02:26.035 web:2064] 200 GET /static/app/components/box/8-box-total.tag?v=51ae33d708746f3a253d31cfb88f02de (127.0.0.1) 0.36ms
+[I 2024-03-01 13:02:26.036 web:2064] 200 GET /static/app/components/help/help-contentC.tag?v=faff8d04a1455567222318dc767b64ae (127.0.0.1) 0.37ms
+[I 2024-03-01 13:02:26.037 web:2064] 200 GET /static/app/components/help/help-contentB.tag?v=8c7c3265dd6a66f0b374bb7641ddfc78 (127.0.0.1) 0.36ms
+[I 2024-03-01 13:02:26.037 web:2064] 200 GET /static/app/components/numpad/numpad-numbers-no-enter.tag?v=471e4bffd46421aa303e9935ce3969ba (127.0.0.1) 0.46ms
+[I 2024-03-01 13:02:26.038 web:2064] 200 GET /static/app/components/numpad/numpad-pause.tag?v=2cd8d19d3f5f78c6fec21c2b051d477d (127.0.0.1) 0.39ms
+[I 2024-03-01 13:02:26.039 web:2064] 200 GET /static/app/components/help/help-home.tag?v=c5c20b77725e05c40d1d733a372b3707 (127.0.0.1) 0.37ms
+[I 2024-03-01 13:02:26.039 web:2064] 200 GET /static/app/components/help/help-menu.tag?v=a31ea1b371e360d5a2712469a60b9ebf (127.0.0.1) 0.38ms
+[I 2024-03-01 13:02:26.040 web:2064] 200 GET /static/app/components/numpad/numpad-cashier-closed.tag?v=aec52bd592ac17e6e2a4b3fff1e1951b (127.0.0.1) 0.42ms
+[I 2024-03-01 13:02:26.041 web:2064] 200 GET /static/app/components/numpad/numpad-numbers.tag?v=d038d6e8bdaab46c33b213c424dfb55c (127.0.0.1) 0.46ms
+[I 2024-03-01 13:02:26.042 web:2064] 200 GET /static/app/components/numpad/numpad-and-functions.tag?v=c1a1b10ec909f56a493c903e8545cee9 (127.0.0.1) 0.44ms
+[I 2024-03-01 13:02:26.042 web:2064] 200 GET /static/app/components/operator/operator-cash-check.tag?v=35bfa1f56c479fe8c9cb445f766b0e91 (127.0.0.1) 0.43ms
+[I 2024-03-01 13:02:26.043 web:2064] 200 GET /static/app/components/operator/operator-departments.tag?v=d3f53eb1b8f18d86ca29340ba7a03f10 (127.0.0.1) 0.46ms
+[I 2024-03-01 13:02:26.044 web:2064] 200 GET /static/app/components/operator/operator-loader.tag?v=51d1353fa50409daeac6805227bc4f47 (127.0.0.1) 0.39ms
+[I 2024-03-01 13:02:26.044 web:2064] 200 GET /static/app/components/operator/operator-pause.tag?v=fdfc7142c679c33c35c5aaa795296b01 (127.0.0.1) 0.37ms
+[I 2024-03-01 13:02:26.045 web:2064] 200 GET /static/app/components/operator/operator-rapid-choice.tag?v=7fff16f2deb4dd87de1a3758f578be63 (127.0.0.1) 0.37ms
+[I 2024-03-01 13:02:26.046 web:2064] 200 GET /static/app/components/operator/operator-view-receipt.tag?v=a583e02f5dafef6dc83405354952db4a (127.0.0.1) 0.46ms
+[I 2024-03-01 13:02:26.046 web:2064] 200 GET /static/app/components/operator/operator-payment-choice.tag?v=b05905fea11025dee6472313afe30370 (127.0.0.1) 0.40ms
+[I 2024-03-01 13:02:26.047 web:2064] 200 GET /static/app/components/page/page-block-ui.tag?v=9ad7d386d3d106d4f9ceb7295d0d754b (127.0.0.1) 0.39ms
+[I 2024-03-01 13:02:26.048 web:2064] 200 GET /static/app/components/page/page-block-ui-from-js.tag?v=f6ff15340b6743c0b0270e45528539fd (127.0.0.1) 0.40ms
+[I 2024-03-01 13:02:26.048 web:2064] 200 GET /static/app/components/page/page-cash-check.tag?v=93728ca0a8c85d92f2063350264a5afd (127.0.0.1) 0.41ms
+[I 2024-03-01 13:02:26.049 web:2064] 200 GET /static/app/components/page/page-cashier-closed.tag?v=07f75a427836634b6b2cb340c522dad4 (127.0.0.1) 0.45ms
+[I 2024-03-01 13:02:26.050 web:2064] 200 GET /static/app/components/page/page-cashier-opened.tag?v=8ccf95ea92809501c20e5be30287b0f3 (127.0.0.1) 0.42ms
+[I 2024-03-01 13:02:26.050 web:2064] 200 GET /static/app/components/page/page-delete-selected-line.tag?v=3543a70a21a5c75c4da8598723c40070 (127.0.0.1) 0.43ms
+[I 2024-03-01 13:02:26.051 web:2064] 200 GET /static/app/components/page/page-eft-payments.tag?v=c86547c013d538de729b7ed526192f61 (127.0.0.1) 0.40ms
+[I 2024-03-01 13:02:26.052 web:2064] 200 GET /static/app/components/page/page-help.tag?v=fc9cf1875a582745283a6aeae3e17004 (127.0.0.1) 0.38ms
+[I 2024-03-01 13:02:26.052 web:2064] 200 GET /static/app/components/page/page-loader.tag?v=f76a2d7acf37cea781877f67cc875f96 (127.0.0.1) 0.38ms
+[I 2024-03-01 13:02:26.053 web:2064] 200 GET /static/app/components/page/page-deposit.tag?v=71a6df9761d91494339f7e58b11bb983 (127.0.0.1) 0.39ms
+[I 2024-03-01 13:02:26.054 web:2064] 200 GET /static/app/components/page/page-not-payable-article.tag?v=33ba0ed0885ba3c37ef66f73f44ec418 (127.0.0.1) 1.17ms
+[I 2024-03-01 13:02:26.055 web:2064] 200 GET /static/app/components/page/page-custumer-items.tag?v=33b923af8af7b3663424d2738aaa582f (127.0.0.1) 0.45ms
+[I 2024-03-01 13:02:26.056 web:2064] 200 GET /static/app/components/page/page-custumer-items-choice.tag?v=335fafda50fcb31950e884739d0b647d (127.0.0.1) 0.46ms
+[I 2024-03-01 13:02:26.057 web:2064] 200 GET /static/app/components/page/page-virtual-stamps-conversion.tag?v=6dd0cc76c95d76eb796defcc2a4c2aac (127.0.0.1) 0.42ms
+[I 2024-03-01 13:02:26.057 web:2064] 200 GET /static/app/components/page/page-virtual-stamps-conversion-choice.tag?v=8beac49f327c71417050a10202f6c2ea (127.0.0.1) 0.46ms
+[I 2024-03-01 13:02:26.058 web:2064] 200 GET /static/app/components/page/page-view-price.tag?v=ad01ca6906fd62b50cbae7cd0581bb4a (127.0.0.1) 0.42ms
+[I 2024-03-01 13:02:26.060 web:2064] 200 GET /static/app/components/page/page-info-subtotali.tag?v=bbd0675d3d616346c48b2826eecd0003 (127.0.0.1) 0.49ms
+[I 2024-03-01 13:02:26.061 web:2064] 200 GET /static/app/components/page/page-payment-choice.tag?v=09d0cb0c9fc9a5a799586a4ed48ca310 (127.0.0.1) 0.41ms
+[I 2024-03-01 13:02:26.061 web:2064] 200 GET /static/app/components/page/page-block-ui-itemprem.tag?v=3d82246bf7237a163b2bfc46302272f5 (127.0.0.1) 0.35ms
+[I 2024-03-01 13:02:26.062 web:2064] 200 GET /static/app/components/page/page-consent.tag?v=afa4a76d749773f68dc9eca165044456 (127.0.0.1) 0.36ms
+[I 2024-03-01 13:02:26.062 web:2064] 200 GET /static/app/components/page/page-birthdate-on-pinpad.tag?v=bd2c424565e1798fc2576f1d8cd738ac (127.0.0.1) 0.37ms
+[I 2024-03-01 13:02:26.063 web:2064] 200 GET /static/app/components/page/page-birthdate-not-authorized.tag?v=e4a314fa4b905d4dcf27e432cbde2272 (127.0.0.1) 0.37ms
+[I 2024-03-01 13:02:26.064 web:2064] 200 GET /static/app/components/page/page-birthdate-error-on-total.tag?v=77cdd80730004d508d0717bad3d3d622 (127.0.0.1) 0.39ms
+[I 2024-03-01 13:02:26.064 web:2064] 200 GET /static/app/components/page/page-lottery-popup.tag?v=1f641746ed149e9e47fff09627b412f9 (127.0.0.1) 0.37ms
+[I 2024-03-01 13:02:26.065 web:2064] 200 GET /static/app/components/page/page-category-coupon-popup.tag?v=a87360dd2cfb0c2623900f43ec79f0d8 (127.0.0.1) 0.38ms
+[I 2024-03-01 13:02:26.066 web:2064] 200 GET /static/app/components/receipt/receipt-article-line.tag?v=c2e479181b52edc6053bc6bb2639110e (127.0.0.1) 0.38ms
+[I 2024-03-01 13:02:26.066 web:2064] 200 GET /static/app/components/receipt/receipt-box.tag?v=5fb180ccec01deb30adb1b9fe5239d0a (127.0.0.1) 0.38ms
+[I 2024-03-01 13:02:26.067 web:2064] 200 GET /static/app/components/receipt/receipt-footer.tag?v=cc00920bd363a1ccd654d49a10338ffc (127.0.0.1) 0.38ms
+[I 2024-03-01 13:02:26.067 web:2064] 200 GET /static/app/components/receipt/receipt-header.tag?v=9a073c8c32b503fb754391fcd6155e7d (127.0.0.1) 0.40ms
+[I 2024-03-01 13:02:26.068 web:2064] 200 GET /static/app/components/page/page-block-wait-response.tag?v=3d5197a24f6ab47e0ac2b51e373c2648 (127.0.0.1) 0.40ms
+[I 2024-03-01 13:02:26.069 web:2064] 200 GET /static/app/components/page/page-wait-popup.tag?v=e114f9e70d2696287d4897773679f393 (127.0.0.1) 0.39ms
+[I 2024-03-01 13:02:26.069 web:2064] 200 GET /static/app/components/page/page-generic-popup.tag?v=bd78cfab9dbd583049fb4945a1537b2a (127.0.0.1) 0.41ms
+[I 2024-03-01 13:02:26.070 web:2064] 200 GET /static/app/components/form/fixlen-form.tag?v=0bc93456c7e88ea7192dcd7b5c49f252 (127.0.0.1) 0.39ms
+[I 2024-03-01 13:02:26.071 web:2064] 200 GET /static/app/components/form/varlen-form.tag?v=e7f48a78a8fa96069716b43b7ce1addf (127.0.0.1) 0.39ms
+[I 2024-03-01 13:02:26.071 web:2064] 200 GET /static/app/components/std-sco/page-sco-out-of-service.tag?v=610a657efa2167fcc176c485b24cae8f (127.0.0.1) 0.38ms
+[I 2024-03-01 13:02:26.072 web:2064] 200 GET /static/app/components/page/page-deduction-popup.tag?v=26c3d5cd594fbe0021f0654cbf3d6f8e (127.0.0.1) 0.40ms
+[I 2024-03-01 13:02:26.073 web:2064] 200 GET /static/app/components/page/page-block-ui-generic.tag?v=37e91c68cd129e530cd9c932203e118d (127.0.0.1) 0.38ms
+[W 2024-03-01 13:02:26.074 web:2064] 404 GET /favicon.ico (127.0.0.1) 0.86ms
+[I 2024-03-01 13:02:26.143 web:2064] 200 GET /static/app/_shared/img/pause_th.png (127.0.0.1) 0.81ms
+[W 2024-03-01 13:02:26.143 web:2064] 404 GET /static/app/_shared/img/cash_img/RIR.jpg (127.0.0.1) 0.37ms
+[W 2024-03-01 13:02:26.144 web:2064] 404 GET /static/app/_shared/img/cash_img/FIR.jpg (127.0.0.1) 0.32ms
+[W 2024-03-01 13:02:26.144 web:2064] 404 GET /static/app/_shared/img/cash_img/R.jpg (127.0.0.1) 0.31ms
+[W 2024-03-01 13:02:26.145 web:2064] 404 GET /static/app/_shared/img/cash_img/F.jpg (127.0.0.1) 0.32ms
+[I 2024-03-01 13:02:26.145 web:2064] 200 GET /static/app/_shared/img/HelpEFT.PNG (127.0.0.1) 0.52ms
+[I 2024-03-01 13:02:26.146 web:2064] 200 GET /static/app/_shared/img/logo.png (127.0.0.1) 0.36ms
+[I 2024-03-01 13:02:26.147 web:2064] 200 GET /static/app/_shared/img/4store.png?v=1709294546105 (127.0.0.1) 0.41ms
+[I 2024-03-01 13:02:26.147 web:2064] 200 GET /static/app/_shared/img/bg_self_checkout_banner_brand_1.png?v= (127.0.0.1) 0.41ms
+[I 2024-03-01 13:02:26.148 web:2064] 200 GET /static/app/_shared/img/pinpad-consent.png?v= (127.0.0.1) 0.76ms
+[I 2024-03-01 13:02:26.149 web:2064] 200 GET /static/app/_shared/img/bg_self_checkout_footer_new.png?v= (127.0.0.1) 0.38ms
+[I 2024-03-01 13:02:26.150 web:2064] 200 GET /static/app/_shared/img/pinpad-birthdate.png?v= (127.0.0.1) 0.45ms
+[I 2024-03-01 13:02:26.150 web:2064] 200 GET /static/app/_shared/img/Icona_CF.png?=v= (127.0.0.1) 0.34ms
+[I 2024-03-01 13:02:26.151 web:2064] 200 GET /static/app/_shared/img/ellipses.gif?v= (127.0.0.1) 0.37ms
+[I 2024-03-01 13:02:26.357 web:2064] 101 GET /websocket (127.0.0.1) 1.11ms
+[I 2024-03-01 13:02:26.366 uiclictrl:271] on_CLIENT_CONNECTED(...)
+[I 2024-03-01 13:02:26.370 uiclictrl:294] UI_CLI_SEND_IDENS_IDM_IDC_DATA
+[I 2024-03-01 13:02:26.376 uiclictrl:304] UI_CLI_SET_TYPUI
+[I 2024-03-01 13:02:26.380 uiclictrl:4250] UI_IS_FISCAL_PRINTER
+[I 2024-03-01 13:02:26.384 uiclictrl:4376] UI_GET_TRANSLATIONS
+[I 2024-03-01 13:02:26.386 uiclictrl:4379] broadcasting responseTranslation
+[I 2024-03-01 13:02:26.390 uiclictrl:287] on_UI_WS_READY
+[I 2024-03-01 13:02:26.392 uiclictrl:5996] S - UI_CLI_IS_PAYMENT_ACTIVE
+[I 2024-03-01 13:02:26.394 uiclictrl:6181] on_UI_CLI_ACTIVATE_STD_BUTTONS
+[I 2024-03-01 13:02:26.396 uiclictrl:6163] CASHMANAGER - on_UI_CLI_CASHMANAGER_CHECK_WAIT_POPUP
+[I 2024-03-01 13:02:26.399 uiclictrl:6165] on_UI_CLI_CASHMANAGER_CHECK_WAIT_POPUP self.onStd False open False
+[I 2024-03-01 13:02:26.401 uiclictrl:6124] on_UI_CLI_CASHMANAGER_CHECK_IMAGE_POPUP
+[I 2024-03-01 13:02:26.403 uiclictrl:1643] UI_CLI_NEW_WS_CLIENT
+[I 2024-03-01 13:02:26.404 uiclictrl:1646] === new wsclient <orkpos.engine.posHandler.OrkPosHandler object at 0x7f3716d90ed0> ===
+[I 2024-03-01 13:02:26.405 uiclictrl:6198] on_UI_CLI_REQUEST_WS_SYNC_ENGINE
+[I 2024-03-01 13:02:26.406 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': ['4Store', 'ESSELUNGA'], 'ch': 'boxInfo'}
+[I 2024-03-01 13:02:26.408 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']}
+[I 2024-03-01 13:02:26.409 uiclictrl:435] on_UI_CLI_CLEAR_INPUT
+[I 2024-03-01 13:02:26.411 uistore:58] on_UI_CLEAR_INPUT
+[I 2024-03-01 13:02:26.413 uiclictrl:1511] ENGINE_STATE {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 257, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 784, u'STYLECR': 784, u'idt': 281, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2}
+[I 2024-03-01 13:02:26.414 uiclictrl:1999] UI_CLI_UNLOCK_CONTEXT_UPDATE
+[I 2024-03-01 13:02:26.415 posuiservice:630] ALTRI TOTALI {'ctx': 1, 'B.PASTO': Decimal('0'), 'B.CELIACHIA': Decimal('0')}
+[I 2024-03-01 13:02:26.416 posuiservice:616] _get_context_ux {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 257, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 784, u'STYLECR': 784, u'idt': 281, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2} - 999999
+[W 2024-03-01 13:02:26.417 posuiservice:1988] _redirect_unmapped_ctx - trying to remap UI ctx to engine ctx...
+[I 2024-03-01 13:02:26.418 posuiservice:624] new ux context 999999
+[I 2024-03-01 13:02:26.419 posuiservice:608] S - _set_data_from_entry 999999
+[I 2024-03-01 13:02:26.420 uiclictrl:5923] on_UI_SEND_WS
+[I 2024-03-01 13:02:26.421 posuiservice:1714] is_card_already_in_use {}-None
+[I 2024-03-01 13:02:26.422 uistore:386] SEND_CURRENT_RECEIPT({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f371666dc20>, 'syncClient': <orkpos.engine.posHandler.OrkPosHandler object at 0x7f3716d90ed0>})
+[I 2024-03-01 13:02:26.423 posHandler:221] WebSocket opened set([<orkpos.engine.posHandler.OrkPosHandler object at 0x7f3716d90ed0>])
+[I 2024-03-01 13:02:26.906 uiclictrl:6084] on_UI_ENABLE_SCO_REREAD
+[I 2024-03-01 13:02:26.923 web:2064] 101 GET /websocket (10.118.3.121) 1.43ms
+[I 2024-03-01 13:02:26.927 uiclictrl:271] on_CLIENT_CONNECTED(...)
+[I 2024-03-01 13:02:26.930 uiclictrl:294] UI_CLI_SEND_IDENS_IDM_IDC_DATA
+[I 2024-03-01 13:02:26.935 uiclictrl:304] UI_CLI_SET_TYPUI
+[I 2024-03-01 13:02:26.940 uiclictrl:4250] UI_IS_FISCAL_PRINTER
+[I 2024-03-01 13:02:26.945 uiclictrl:4376] UI_GET_TRANSLATIONS
+[I 2024-03-01 13:02:26.947 uiclictrl:4379] broadcasting responseTranslation
+[I 2024-03-01 13:02:26.952 uiclictrl:287] on_UI_WS_READY
+[I 2024-03-01 13:02:26.955 uiclictrl:5996] S - UI_CLI_IS_PAYMENT_ACTIVE
+[I 2024-03-01 13:02:26.956 uiclictrl:6181] on_UI_CLI_ACTIVATE_STD_BUTTONS
+[I 2024-03-01 13:02:26.959 uiclictrl:6163] CASHMANAGER - on_UI_CLI_CASHMANAGER_CHECK_WAIT_POPUP
+[I 2024-03-01 13:02:26.961 uiclictrl:6165] on_UI_CLI_CASHMANAGER_CHECK_WAIT_POPUP self.onStd False open False
+[I 2024-03-01 13:02:26.963 uiclictrl:6124] on_UI_CLI_CASHMANAGER_CHECK_IMAGE_POPUP
+[I 2024-03-01 13:02:26.965 uiclictrl:1643] UI_CLI_NEW_WS_CLIENT
+[I 2024-03-01 13:02:26.966 uiclictrl:1646] === new wsclient <orkpos.engine.posHandler.OrkPosHandler object at 0x7f3716cb4610> ===
+[I 2024-03-01 13:02:26.968 uiclictrl:6198] on_UI_CLI_REQUEST_WS_SYNC_ENGINE
+[I 2024-03-01 13:02:26.969 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': ['4Store', 'ESSELUNGA'], 'ch': 'boxInfo'}
+[I 2024-03-01 13:02:26.971 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']}
+[I 2024-03-01 13:02:26.972 uiclictrl:435] on_UI_CLI_CLEAR_INPUT
+[I 2024-03-01 13:02:26.974 uistore:58] on_UI_CLEAR_INPUT
+[I 2024-03-01 13:02:26.977 uiclictrl:1511] ENGINE_STATE {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 257, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 784, u'STYLECR': 784, u'idt': 281, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2}
+[I 2024-03-01 13:02:26.978 uiclictrl:1999] UI_CLI_UNLOCK_CONTEXT_UPDATE
+[I 2024-03-01 13:02:26.980 posuiservice:630] ALTRI TOTALI {'ctx': 1, 'B.PASTO': Decimal('0'), 'B.CELIACHIA': Decimal('0')}
+[I 2024-03-01 13:02:26.981 posuiservice:616] _get_context_ux {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 257, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 784, u'STYLECR': 784, u'idt': 281, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2} - 999999
+[W 2024-03-01 13:02:26.982 posuiservice:1988] _redirect_unmapped_ctx - trying to remap UI ctx to engine ctx...
+[I 2024-03-01 13:02:26.983 posuiservice:624] new ux context 999999
+[I 2024-03-01 13:02:26.984 posuiservice:608] S - _set_data_from_entry 999999
+[I 2024-03-01 13:02:26.985 uiclictrl:5923] on_UI_SEND_WS
+[I 2024-03-01 13:02:26.986 posuiservice:1714] is_card_already_in_use {}-None
+[I 2024-03-01 13:02:26.987 uistore:386] SEND_CURRENT_RECEIPT({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f371666dc20>, 'syncClient': <orkpos.engine.posHandler.OrkPosHandler object at 0x7f3716cb4610>})
+[I 2024-03-01 13:02:26.987 posHandler:221] WebSocket opened set([<orkpos.engine.posHandler.OrkPosHandler object at 0x7f3716cb4610>, <orkpos.engine.posHandler.OrkPosHandler object at 0x7f3716d90ed0>])
+[I 2024-03-01 13:02:27.285 uiclictrl:4939] CASHMANAGER - UI_CLI_GET_CASHMANAGER_MENU_BUTTON
+[I 2024-03-01 13:02:27.318 uiclictrl:5996] S - UI_CLI_IS_PAYMENT_ACTIVE
+[I 2024-03-01 13:02:27.321 uiclictrl:6181] on_UI_CLI_ACTIVATE_STD_BUTTONS
+[I 2024-03-01 13:02:27.533 web:2064] 101 GET /websocket (127.0.0.1) 1.45ms
+[I 2024-03-01 13:02:27.538 uiclictrl:271] on_CLIENT_CONNECTED(...)
+[I 2024-03-01 13:02:27.542 uiclictrl:294] UI_CLI_SEND_IDENS_IDM_IDC_DATA
+[I 2024-03-01 13:02:27.548 uiclictrl:304] UI_CLI_SET_TYPUI
+[I 2024-03-01 13:02:27.553 uiclictrl:4250] UI_IS_FISCAL_PRINTER
+[I 2024-03-01 13:02:27.559 uiclictrl:4376] UI_GET_TRANSLATIONS
+[I 2024-03-01 13:02:27.562 uiclictrl:4379] broadcasting responseTranslation
+[I 2024-03-01 13:02:27.568 uiclictrl:287] on_UI_WS_READY
+[I 2024-03-01 13:02:27.571 uiclictrl:5996] S - UI_CLI_IS_PAYMENT_ACTIVE
+[I 2024-03-01 13:02:27.573 uiclictrl:6181] on_UI_CLI_ACTIVATE_STD_BUTTONS
+[I 2024-03-01 13:02:27.575 uiclictrl:6163] CASHMANAGER - on_UI_CLI_CASHMANAGER_CHECK_WAIT_POPUP
+[I 2024-03-01 13:02:27.578 uiclictrl:6165] on_UI_CLI_CASHMANAGER_CHECK_WAIT_POPUP self.onStd False open False
+[I 2024-03-01 13:02:27.580 uiclictrl:6124] on_UI_CLI_CASHMANAGER_CHECK_IMAGE_POPUP
+[I 2024-03-01 13:02:27.583 uiclictrl:1643] UI_CLI_NEW_WS_CLIENT
+[I 2024-03-01 13:02:27.584 uiclictrl:1646] === new wsclient <orkpos.engine.posHandler.OrkPosHandler object at 0x7f3716687550> ===
+[I 2024-03-01 13:02:27.585 uiclictrl:6198] on_UI_CLI_REQUEST_WS_SYNC_ENGINE
+[I 2024-03-01 13:02:27.587 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': ['4Store', 'ESSELUNGA'], 'ch': 'boxInfo'}
+[I 2024-03-01 13:02:27.589 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']}
+[I 2024-03-01 13:02:27.590 uiclictrl:435] on_UI_CLI_CLEAR_INPUT
+[I 2024-03-01 13:02:27.591 uistore:58] on_UI_CLEAR_INPUT
+[I 2024-03-01 13:02:27.593 uiclictrl:1511] ENGINE_STATE {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 257, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 784, u'STYLECR': 784, u'idt': 281, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2}
+[I 2024-03-01 13:02:27.595 uiclictrl:1999] UI_CLI_UNLOCK_CONTEXT_UPDATE
+[I 2024-03-01 13:02:27.597 posuiservice:630] ALTRI TOTALI {'ctx': 1, 'B.PASTO': Decimal('0'), 'B.CELIACHIA': Decimal('0')}
+[I 2024-03-01 13:02:27.598 posuiservice:616] _get_context_ux {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 257, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 784, u'STYLECR': 784, u'idt': 281, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2} - 999999
+[W 2024-03-01 13:02:27.599 posuiservice:1988] _redirect_unmapped_ctx - trying to remap UI ctx to engine ctx...
+[I 2024-03-01 13:02:27.600 posuiservice:624] new ux context 999999
+[I 2024-03-01 13:02:27.601 posuiservice:608] S - _set_data_from_entry 999999
+[I 2024-03-01 13:02:27.602 uiclictrl:5923] on_UI_SEND_WS
+[I 2024-03-01 13:02:27.604 posuiservice:1714] is_card_already_in_use {}-None
+[I 2024-03-01 13:02:27.605 uistore:386] SEND_CURRENT_RECEIPT({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f371666dc20>, 'syncClient': <orkpos.engine.posHandler.OrkPosHandler object at 0x7f3716687550>})
+[I 2024-03-01 13:02:27.606 posHandler:221] WebSocket opened set([<orkpos.engine.posHandler.OrkPosHandler object at 0x7f3716cb4610>, <orkpos.engine.posHandler.OrkPosHandler object at 0x7f3716d90ed0>, <orkpos.engine.posHandler.OrkPosHandler object at 0x7f3716687550>])
+[I 2024-03-01 13:02:27.607 uiclictrl:4939] CASHMANAGER - UI_CLI_GET_CASHMANAGER_MENU_BUTTON
+[I 2024-03-01 13:02:27.609 uiclictrl:5996] S - UI_CLI_IS_PAYMENT_ACTIVE
+[I 2024-03-01 13:02:27.610 uiclictrl:6181] on_UI_CLI_ACTIVATE_STD_BUTTONS
+[I 2024-03-01 13:02:27.624 web:2064] 200 GET /static/app/_shared/img/HelpJLem.PNG (127.0.0.1) 0.93ms
+[I 2024-03-01 13:02:27.777 uiclictrl:4939] CASHMANAGER - UI_CLI_GET_CASHMANAGER_MENU_BUTTON
+[I 2024-03-01 13:02:28.396 uiclictrl:6084] on_UI_ENABLE_SCO_REREAD
+[I 2024-03-01 13:02:28.959 uiclictrl:6084] on_UI_ENABLE_SCO_REREAD
+[I 2024-03-01 13:02:29.324 uiclictrl:6084] on_UI_ENABLE_SCO_REREAD
+[I 2024-03-01 13:02:29.575 uiclictrl:6084] on_UI_ENABLE_SCO_REREAD
+[I 2024-03-01 13:02:29.612 uiclictrl:6084] on_UI_ENABLE_SCO_REREAD
+[I 2024-03-01 13:02:31.777 servicesctrl:481] on_SERVICES_TICKET_INFO_DIRECT
+[I 2024-03-01 13:02:31.812 uiclictrl:2216] FISCAL - UI_CLI_FISCAL_ADAPTER_STATUS
+[I 2024-03-01 13:02:31.813 uiclictrl:4865] on_UI_CONTEXT_CHANGED
+[E 2024-03-01 13:02:31.814 posHandler:668] ****************************** seq 6: action=requestpos, key=, table=, op=, bloc=, indice=, idcli=
+[I 2024-03-01 13:02:31.814 messageencodeservice:37] [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']
+[I 2024-03-01 13:02:31.815 messageencodeservice:43] message not present in ntt table
+[I 2024-03-01 13:02:31.815 posHandler:1388] Update UI
+[I 2024-03-01 13:02:31.815 uiclictrl:1678] UI_CLI_REFRESH_UI
+[I 2024-03-01 13:02:31.816 uiclictrl:729] on_UI_CLI_POS_UNBLOCKED
+[I 2024-03-01 13:02:31.817 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': ['4Store', 'ESSELUNGA'], 'ch': 'boxInfo'}
+[I 2024-03-01 13:02:31.818 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']}
+[I 2024-03-01 13:02:31.819 uiclictrl:435] on_UI_CLI_CLEAR_INPUT
+[I 2024-03-01 13:02:31.820 uistore:58] on_UI_CLEAR_INPUT
+[I 2024-03-01 13:02:31.821 uiclictrl:1511] ENGINE_STATE {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 17, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 784, u'STYLECR': 784, u'idt': 281, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2}
+[I 2024-03-01 13:02:31.823 uiclictrl:1999] UI_CLI_UNLOCK_CONTEXT_UPDATE
+[I 2024-03-01 13:02:31.824 uiclictrl:4544] on_UI_SEND_TOTAL_ARTICLES
+[I 2024-03-01 13:02:31.825 uiclictrl:6181] on_UI_CLI_ACTIVATE_STD_BUTTONS
+[I 2024-03-01 13:02:31.826 posuiservice:630] ALTRI TOTALI {'ctx': 1, 'B.PASTO': Decimal('0'), 'B.CELIACHIA': Decimal('0')}
+[I 2024-03-01 13:02:31.826 posuiservice:616] _get_context_ux {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 17, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 784, u'STYLECR': 784, u'idt': 281, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2} - 999999
+[W 2024-03-01 13:02:31.827 posuiservice:1988] _redirect_unmapped_ctx - trying to remap UI ctx to engine ctx...
+[I 2024-03-01 13:02:31.828 posuiservice:624] new ux context 999999
+[I 2024-03-01 13:02:31.829 posuiservice:608] S - _set_data_from_entry 999999
+[I 2024-03-01 13:02:31.830 uiclictrl:5923] on_UI_SEND_WS
+[I 2024-03-01 13:02:31.831 posuiservice:1714] is_card_already_in_use {}-None
+[I 2024-03-01 13:02:31.831 posHandler:1419] >> POS ask to ENABLE scanners <<
+[I 2024-03-01 13:02:31.832 devicesctrl:1192] DEVICE_ACTIVATE_SCANNERS
+[I 2024-03-01 13:02:31.832 devicesctrl:1193] scanners:-1
+[I 2024-03-01 13:02:31.833 devicesctrl:1194] badgeScanners:0
+[I 2024-03-01 13:02:31.833 devicesctrl:1196] __cashDrawerStatus 0
+[I 2024-03-01 13:02:31.834 devicesctrl:1197] __cashDrawerStatusForPOS -1
+[I 2024-03-01 13:02:31.834 devicesctrl:1165] DEVICE_DESACTIVATE_BADGE_SCANNERS
+[I 2024-03-01 13:02:31.835 devicesctrl:1166] scanners:-1
+[I 2024-03-01 13:02:31.835 devicesctrl:1167] badgeScanners:0
+[I 2024-03-01 13:02:31.836 posHandler:1467] Call RECEIPT_CHANGED
+[I 2024-03-01 13:02:31.836 uistore:424] on_RECEIPT_CHANGED({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f371666dc20>})
+[I 2024-03-01 13:02:31.836 uistore:386] SEND_CURRENT_RECEIPT({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f371666dc20>})
+[I 2024-03-01 13:02:31.837 posHandler:1469] Call REFRESH_CUSTOMER_DISPLAY
+[E 2024-03-01 13:02:31.838 posHandler:668] ****************************** seq 7: action=requestpos, key=, table=, op=, bloc=, indice=, idcli=
+[I 2024-03-01 13:02:31.838 messageencodeservice:37] [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']
+[I 2024-03-01 13:02:31.839 messageencodeservice:43] message not present in ntt table
+[I 2024-03-01 13:02:31.839 posHandler:1388] Update UI
+[I 2024-03-01 13:02:31.840 uiclictrl:1678] UI_CLI_REFRESH_UI
+[I 2024-03-01 13:02:31.840 uiclictrl:729] on_UI_CLI_POS_UNBLOCKED
+[I 2024-03-01 13:02:31.841 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': ['4Store', 'ESSELUNGA'], 'ch': 'boxInfo'}
+[I 2024-03-01 13:02:31.842 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']}
+[I 2024-03-01 13:02:31.843 uiclictrl:435] on_UI_CLI_CLEAR_INPUT
+[I 2024-03-01 13:02:31.844 uistore:58] on_UI_CLEAR_INPUT
+[I 2024-03-01 13:02:31.846 uiclictrl:1511] ENGINE_STATE {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 17, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 784, u'STYLECR': 784, u'idt': 281, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2}
+[I 2024-03-01 13:02:31.847 uiclictrl:1999] UI_CLI_UNLOCK_CONTEXT_UPDATE
+[I 2024-03-01 13:02:31.848 uiclictrl:4544] on_UI_SEND_TOTAL_ARTICLES
+[I 2024-03-01 13:02:31.849 uiclictrl:6181] on_UI_CLI_ACTIVATE_STD_BUTTONS
+[I 2024-03-01 13:02:31.850 posuiservice:630] ALTRI TOTALI {'ctx': 1, 'B.PASTO': Decimal('0'), 'B.CELIACHIA': Decimal('0')}
+[I 2024-03-01 13:02:31.851 posuiservice:616] _get_context_ux {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 17, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 784, u'STYLECR': 784, u'idt': 281, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2} - 999999
+[W 2024-03-01 13:02:31.851 posuiservice:1988] _redirect_unmapped_ctx - trying to remap UI ctx to engine ctx...
+[I 2024-03-01 13:02:31.852 posuiservice:624] new ux context 999999
+[I 2024-03-01 13:02:31.853 posuiservice:608] S - _set_data_from_entry 999999
+[I 2024-03-01 13:02:31.853 uiclictrl:5923] on_UI_SEND_WS
+[I 2024-03-01 13:02:31.855 posuiservice:1714] is_card_already_in_use {}-None
+[I 2024-03-01 13:02:31.855 posHandler:1419] >> POS ask to ENABLE scanners <<
+[I 2024-03-01 13:02:31.856 devicesctrl:1192] DEVICE_ACTIVATE_SCANNERS
+[I 2024-03-01 13:02:31.856 devicesctrl:1193] scanners:-1
+[I 2024-03-01 13:02:31.856 devicesctrl:1194] badgeScanners:0
+[I 2024-03-01 13:02:31.857 devicesctrl:1196] __cashDrawerStatus 0
+[I 2024-03-01 13:02:31.857 devicesctrl:1197] __cashDrawerStatusForPOS -1
+[I 2024-03-01 13:02:31.858 devicesctrl:1165] DEVICE_DESACTIVATE_BADGE_SCANNERS
+[I 2024-03-01 13:02:31.859 devicesctrl:1166] scanners:-1
+[I 2024-03-01 13:02:31.859 devicesctrl:1167] badgeScanners:0
+[I 2024-03-01 13:02:31.859 posHandler:1467] Call RECEIPT_CHANGED
+[I 2024-03-01 13:02:31.860 uistore:424] on_RECEIPT_CHANGED({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f371666dc20>})
+[I 2024-03-01 13:02:31.860 uistore:386] SEND_CURRENT_RECEIPT({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f371666dc20>})
+[I 2024-03-01 13:02:31.861 posHandler:1469] Call REFRESH_CUSTOMER_DISPLAY
+[E 2024-03-01 13:02:31.862 posHandler:668] ****************************** seq 8: action=requestpos, key=, table=, op=, bloc=, indice=, idcli=
+[I 2024-03-01 13:02:31.863 messageencodeservice:37] [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']
+[I 2024-03-01 13:02:31.863 messageencodeservice:43] message not present in ntt table
+[I 2024-03-01 13:02:31.863 posHandler:1388] Update UI
+[I 2024-03-01 13:02:31.864 uiclictrl:1678] UI_CLI_REFRESH_UI
+[I 2024-03-01 13:02:31.864 uiclictrl:729] on_UI_CLI_POS_UNBLOCKED
+[I 2024-03-01 13:02:31.865 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': ['4Store', 'ESSELUNGA'], 'ch': 'boxInfo'}
+[I 2024-03-01 13:02:31.867 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']}
+[I 2024-03-01 13:02:31.867 uiclictrl:435] on_UI_CLI_CLEAR_INPUT
+[I 2024-03-01 13:02:31.868 uistore:58] on_UI_CLEAR_INPUT
+[I 2024-03-01 13:02:31.870 uiclictrl:1511] ENGINE_STATE {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 17, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 784, u'STYLECR': 784, u'idt': 281, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2}
+[I 2024-03-01 13:02:31.871 uiclictrl:1999] UI_CLI_UNLOCK_CONTEXT_UPDATE
+[I 2024-03-01 13:02:31.872 uiclictrl:4544] on_UI_SEND_TOTAL_ARTICLES
+[I 2024-03-01 13:02:31.873 uiclictrl:6181] on_UI_CLI_ACTIVATE_STD_BUTTONS
+[I 2024-03-01 13:02:31.874 posuiservice:630] ALTRI TOTALI {'ctx': 1, 'B.PASTO': Decimal('0'), 'B.CELIACHIA': Decimal('0')}
+[I 2024-03-01 13:02:31.875 posuiservice:616] _get_context_ux {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 17, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 784, u'STYLECR': 784, u'idt': 281, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2} - 999999
+[W 2024-03-01 13:02:31.875 posuiservice:1988] _redirect_unmapped_ctx - trying to remap UI ctx to engine ctx...
+[I 2024-03-01 13:02:31.876 posuiservice:624] new ux context 999999
+[I 2024-03-01 13:02:31.877 posuiservice:608] S - _set_data_from_entry 999999
+[I 2024-03-01 13:02:31.878 uiclictrl:5923] on_UI_SEND_WS
+[I 2024-03-01 13:02:31.878 posuiservice:1714] is_card_already_in_use {}-None
+[I 2024-03-01 13:02:31.879 posHandler:1419] >> POS ask to ENABLE scanners <<
+[I 2024-03-01 13:02:31.879 devicesctrl:1192] DEVICE_ACTIVATE_SCANNERS
+[I 2024-03-01 13:02:31.880 devicesctrl:1193] scanners:-1
+[I 2024-03-01 13:02:31.880 devicesctrl:1194] badgeScanners:0
+[I 2024-03-01 13:02:31.881 devicesctrl:1196] __cashDrawerStatus 0
+[I 2024-03-01 13:02:31.881 devicesctrl:1197] __cashDrawerStatusForPOS -1
+[I 2024-03-01 13:02:31.882 devicesctrl:1165] DEVICE_DESACTIVATE_BADGE_SCANNERS
+[I 2024-03-01 13:02:31.882 devicesctrl:1166] scanners:-1
+[I 2024-03-01 13:02:31.883 devicesctrl:1167] badgeScanners:0
+[I 2024-03-01 13:02:31.883 posHandler:1467] Call RECEIPT_CHANGED
+[I 2024-03-01 13:02:31.884 uistore:424] on_RECEIPT_CHANGED({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f371666dc20>})
+[I 2024-03-01 13:02:31.884 uistore:386] SEND_CURRENT_RECEIPT({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f371666dc20>})
+[I 2024-03-01 13:02:31.885 posHandler:1469] Call REFRESH_CUSTOMER_DISPLAY
+[I 2024-03-01 13:02:33.828 uiclictrl:6084] on_UI_ENABLE_SCO_REREAD
+[I 2024-03-01 13:02:33.851 uiclictrl:6084] on_UI_ENABLE_SCO_REREAD
+[I 2024-03-01 13:02:33.880 uiclictrl:6084] on_UI_ENABLE_SCO_REREAD
+[I 2024-03-01 13:02:34.861 servicesctrl:521] 0 custom ticket(s) still in the queue 
+[I 2024-03-01 13:02:34.862 servicesctrl:522] data {'jret': {'tsReqAdp': datetime.datetime(2024, 3, 1, 13, 2, 24, 919556), 'ReturnCodeAdapter': 0}, 'typ': 911, 'ref': '', '_ac': 'ticket', '_op': 'newinfo'}
+[I 2024-03-01 13:02:34.864 servicesctrl:524] Create new custom ticket 911, ref= and wait for ticket.end
+[I 2024-03-01 13:02:34.865 posHandler:1580] sendCmd(...)
+[E 2024-03-01 13:02:34.937 posHandler:668] ****************************** seq 9: action=info, key=ticket.start, table=, op=, bloc=, indice=, idcli=
+[E 2024-03-01 13:02:34.956 posHandler:668] ****************************** seq 10: action=insert, key=, table=s_tkt, op=, bloc=, indice=, idcli=
+[E 2024-03-01 13:02:34.959 posHandler:668] ****************************** seq 11: action=info, key=print.start, table=, op=, bloc=, indice=1, idcli=
+[E 2024-03-01 13:02:34.960 posHandler:668] ****************************** seq 12: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.962 posHandler:668] ****************************** seq 13: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.963 posHandler:668] ****************************** seq 14: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.965 posHandler:668] ****************************** seq 15: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.966 posHandler:668] ****************************** seq 16: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.967 posHandler:668] ****************************** seq 17: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.968 posHandler:668] ****************************** seq 18: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.969 posHandler:668] ****************************** seq 19: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.970 posHandler:668] ****************************** seq 20: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.971 posHandler:668] ****************************** seq 21: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.972 posHandler:668] ****************************** seq 22: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.973 posHandler:668] ****************************** seq 23: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.974 posHandler:668] ****************************** seq 24: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.975 posHandler:668] ****************************** seq 25: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.976 posHandler:668] ****************************** seq 26: action=info, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.977 posHandler:668] ****************************** seq 27: action=info, key=print.end, table=, op=, bloc=, indice=1, idcli=
+[E 2024-03-01 13:02:34.978 posHandler:668] ****************************** seq 28: action=info, key=print.start, table=, op=, bloc=, indice=8, idcli=
+[E 2024-03-01 13:02:34.979 posHandler:668] ****************************** seq 29: action=info, key=, table=s_msg, op=, bloc=8, indice=, idcli=
+[E 2024-03-01 13:02:34.979 posHandler:668] ****************************** seq 30: action=info, key=, table=s_msg, op=, bloc=8, indice=, idcli=
+[E 2024-03-01 13:02:34.980 posHandler:668] ****************************** seq 31: action=info, key=, table=s_msg, op=, bloc=8, indice=, idcli=
+[E 2024-03-01 13:02:34.981 posHandler:668] ****************************** seq 32: action=info, key=print.end, table=, op=, bloc=, indice=8, idcli=
+[E 2024-03-01 13:02:34.982 posHandler:668] ****************************** seq 33: action=info, key=print.start, table=, op=, bloc=, indice=9, idcli=
+[E 2024-03-01 13:02:34.982 posHandler:668] ****************************** seq 34: action=info, key=print.end, table=, op=, bloc=, indice=9, idcli=
+[E 2024-03-01 13:02:34.983 posHandler:668] ****************************** seq 35: action=info, key=print.start, table=, op=, bloc=, indice=10, idcli=
+[E 2024-03-01 13:02:34.984 posHandler:668] ****************************** seq 36: action=info, key=print.end, table=, op=, bloc=, indice=10, idcli=
+[E 2024-03-01 13:02:34.984 posHandler:668] ****************************** seq 37: action=info, key=print.start, table=, op=, bloc=, indice=11, idcli=
+[E 2024-03-01 13:02:34.985 posHandler:668] ****************************** seq 38: action=info, key=print.end, table=, op=, bloc=, indice=11, idcli=
+[E 2024-03-01 13:02:34.986 posHandler:668] ****************************** seq 39: action=info, key=print.start, table=, op=, bloc=, indice=12, idcli=
+[E 2024-03-01 13:02:34.986 posHandler:668] ****************************** seq 40: action=info, key=print.end, table=, op=, bloc=, indice=12, idcli=
+[E 2024-03-01 13:02:34.987 posHandler:668] ****************************** seq 41: action=info, key=print.start, table=, op=, bloc=, indice=15, idcli=
+[E 2024-03-01 13:02:34.987 posHandler:668] ****************************** seq 42: action=info, key=print.end, table=, op=, bloc=, indice=15, idcli=
+[E 2024-03-01 13:02:34.988 posHandler:668] ****************************** seq 43: action=info, key=print.start, table=, op=, bloc=, indice=20, idcli=
+[E 2024-03-01 13:02:34.989 posHandler:668] ****************************** seq 44: action=info, key=, table=s_msg, op=, bloc=20, indice=, idcli=
+[E 2024-03-01 13:02:34.989 posHandler:668] ****************************** seq 45: action=info, key=, table=s_msg, op=, bloc=20, indice=, idcli=
+[E 2024-03-01 13:02:34.990 posHandler:668] ****************************** seq 46: action=info, key=, table=s_msg, op=, bloc=20, indice=, idcli=
+[E 2024-03-01 13:02:34.991 posHandler:668] ****************************** seq 47: action=info, key=, table=s_msg, op=, bloc=20, indice=, idcli=
+[E 2024-03-01 13:02:34.992 posHandler:668] ****************************** seq 48: action=info, key=, table=s_msg, op=, bloc=20, indice=, idcli=
+[E 2024-03-01 13:02:34.993 posHandler:668] ****************************** seq 49: action=info, key=, table=s_msg, op=, bloc=20, indice=, idcli=
+[E 2024-03-01 13:02:34.993 posHandler:668] ****************************** seq 50: action=info, key=print.end, table=, op=, bloc=, indice=20, idcli=
+[E 2024-03-01 13:02:34.994 posHandler:668] ****************************** seq 51: action=info, key=msg.start, table=, op=, bloc=, indice=, idcli=
+[E 2024-03-01 13:02:34.995 posHandler:668] ****************************** seq 52: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.996 posHandler:668] ****************************** seq 53: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.997 posHandler:668] ****************************** seq 54: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.998 posHandler:668] ****************************** seq 55: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:34.999 posHandler:668] ****************************** seq 56: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:35.000 posHandler:668] ****************************** seq 57: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:35.002 posHandler:668] ****************************** seq 58: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:35.003 posHandler:668] ****************************** seq 59: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:35.004 posHandler:668] ****************************** seq 60: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:35.005 posHandler:668] ****************************** seq 61: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:35.006 posHandler:668] ****************************** seq 62: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:35.008 posHandler:668] ****************************** seq 63: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:35.009 posHandler:668] ****************************** seq 64: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:35.010 posHandler:668] ****************************** seq 65: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:35.011 posHandler:668] ****************************** seq 66: action=insert, key=, table=s_msg, op=, bloc=1, indice=, idcli=
+[E 2024-03-01 13:02:35.012 posHandler:668] ****************************** seq 67: action=insert, key=, table=s_msg, op=, bloc=8, indice=, idcli=
+[E 2024-03-01 13:02:35.014 posHandler:668] ****************************** seq 68: action=insert, key=, table=s_msg, op=, bloc=8, indice=, idcli=
+[E 2024-03-01 13:02:35.015 posHandler:668] ****************************** seq 69: action=insert, key=, table=s_msg, op=, bloc=8, indice=, idcli=
+[E 2024-03-01 13:02:35.016 posHandler:668] ****************************** seq 70: action=insert, key=, table=s_msg, op=, bloc=20, indice=, idcli=
+[E 2024-03-01 13:02:35.017 posHandler:668] ****************************** seq 71: action=insert, key=, table=s_msg, op=, bloc=20, indice=, idcli=
+[E 2024-03-01 13:02:35.018 posHandler:668] ****************************** seq 72: action=insert, key=, table=s_msg, op=, bloc=20, indice=, idcli=
+[E 2024-03-01 13:02:35.019 posHandler:668] ****************************** seq 73: action=insert, key=, table=s_msg, op=, bloc=20, indice=, idcli=
+[E 2024-03-01 13:02:35.021 posHandler:668] ****************************** seq 74: action=insert, key=, table=s_msg, op=, bloc=20, indice=, idcli=
+[E 2024-03-01 13:02:35.022 posHandler:668] ****************************** seq 75: action=insert, key=, table=s_msg, op=, bloc=20, indice=, idcli=
+[E 2024-03-01 13:02:35.023 posHandler:668] ****************************** seq 76: action=info, key=msg.end, table=, op=, bloc=, indice=, idcli=
+[E 2024-03-01 13:02:35.024 posHandler:668] ****************************** seq 77: action=insert, key=, table=s_stat, op=, bloc=, indice=, idcli=
+[E 2024-03-01 13:02:35.025 posHandler:668] ****************************** seq 78: action=info, key=ticket.before.end, table=, op=, bloc=, indice=, idcli=
+[E 2024-03-01 13:02:35.025 posHandler:668] ****************************** seq 79: action=requestpos, key=, table=, op=, bloc=, indice=, idcli=
+[I 2024-03-01 13:02:35.026 messageencodeservice:37] [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']
+[I 2024-03-01 13:02:35.026 messageencodeservice:43] message not present in ntt table
+[I 2024-03-01 13:02:35.027 posHandler:1388] Update UI
+[I 2024-03-01 13:02:35.027 uiclictrl:1678] UI_CLI_REFRESH_UI
+[I 2024-03-01 13:02:35.028 uiclictrl:684] on_UI_CLI_POS_BLOCK
+[I 2024-03-01 13:02:35.028 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': ['ATTESA AUTORIZZAZIONE..', ' '], 'ch': 'cashierDisplay'}
+[I 2024-03-01 13:02:35.029 uiclictrl:435] on_UI_CLI_CLEAR_INPUT
+[I 2024-03-01 13:02:35.030 uistore:58] on_UI_CLEAR_INPUT
+[I 2024-03-01 13:02:35.032 devicesctrl:1212] DEVICE_DESACTIVATE_SCANNERS
+[I 2024-03-01 13:02:35.032 devicesctrl:1213] scanners:-1
+[I 2024-03-01 13:02:35.033 devicesctrl:1214] badgeScanners:0
+[I 2024-03-01 13:02:35.034 devicesctrl:1165] DEVICE_DESACTIVATE_BADGE_SCANNERS
+[I 2024-03-01 13:02:35.034 devicesctrl:1166] scanners:0
+[I 2024-03-01 13:02:35.035 devicesctrl:1167] badgeScanners:0
+[I 2024-03-01 13:02:35.035 posHandler:1467] Call RECEIPT_CHANGED
+[I 2024-03-01 13:02:35.035 uistore:424] on_RECEIPT_CHANGED({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>})
+[I 2024-03-01 13:02:35.036 uistore:386] SEND_CURRENT_RECEIPT({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>})
+[I 2024-03-01 13:02:35.037 posHandler:1469] Call REFRESH_CUSTOMER_DISPLAY
+[E 2024-03-01 13:02:35.038 posHandler:668] ****************************** seq 80: action=beforeendtkt, key=bnoir, table=, op=jret, bloc=, indice=, idcli=
+[I 2024-03-01 13:02:35.039 posHandler:1284] key beforeendtkt bnoir
+[E 2024-03-01 13:02:35.039 posHandler:668] ****************************** seq 81: action=update, key=, table=s_tkt, op=, bloc=, indice=, idcli=
+[E 2024-03-01 13:02:35.041 posHandler:668] ****************************** seq 82: action=requestpos, key=, table=, op=, bloc=, indice=, idcli=
+[I 2024-03-01 13:02:35.042 messageencodeservice:37] [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']
+[I 2024-03-01 13:02:35.042 messageencodeservice:43] message not present in ntt table
+[I 2024-03-01 13:02:35.043 receipt:1564] beforeendtkt >>> S - compat_orkpos5_6_1x
+[I 2024-03-01 13:02:35.043 receipt:278] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is closed: True
+[I 2024-03-01 13:02:35.044 receipt:286] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is suspended: False
+[I 2024-03-01 13:02:35.044 receipt:302] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is aborted: False
+[I 2024-03-01 13:02:35.045 receipt:1575] beforeendtkt >>> _change_tkt_for_baskets : 0.002018
+[I 2024-03-01 13:02:35.046 receipt:1578] beforeendtkt >>> _change_tkt_for_pharma : 0.000479
+[I 2024-03-01 13:02:35.047 receipt:1581] beforeendtkt >>> _change_tkt_for_s_pay : 0.000113
+[I 2024-03-01 13:02:35.047 receipt:2065] Computing the TVA repartition ...
+[I 2024-03-01 13:02:35.047 receipt:1584] beforeendtkt >>> _insert_s_tva_in_tkt : 0.000446
+[I 2024-03-01 13:02:35.051 receipt:1587] beforeendtkt >>> _change_tkt_for_tva : 0.002999
+[I 2024-03-01 13:02:35.051 receipt:278] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is closed: True
+[I 2024-03-01 13:02:35.052 receipt:286] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is suspended: False
+[I 2024-03-01 13:02:35.052 receipt:302] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is aborted: False
+[I 2024-03-01 13:02:35.052 receipt:302] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is aborted: False
+[I 2024-03-01 13:02:35.055 receipt:1590] beforeendtkt >>> _insert_s_tkt_jret : 0.004052
+[I 2024-03-01 13:02:35.056 receipt:1593] beforeendtkt >>> _change_s_rtkt : 0.000084
+[I 2024-03-01 13:02:35.056 receipt:1596] beforeendtkt >>> _change_s_rfid_jret : 0.000020
+[I 2024-03-01 13:02:35.056 receipt:1599] beforeendtkt >>> _change_tkt_for_convrfid : 0.000022
+[I 2024-03-01 13:02:35.056 receipt:1602] beforeendtkt >>> _change_piccola_cassa_jret_on_cashmanager_pos : 0.000024
+[I 2024-03-01 13:02:35.057 receipt:1605] beforeendtkt >>> _insert_badge_in_s_auto : 0.000732
+[I 2024-03-01 13:02:35.060 receipt:1608] beforeendtkt >>> _change_tkt_for_omaggio : 0.002608
+[I 2024-03-01 13:02:35.061 receipt:2477] _change_tkt_for_deduction
+[I 2024-03-01 13:02:35.061 receipt:2479] checkReceipt jret {'listTVA': [], 'screens': {}, 'tipoPos': 'STD', u'tsReqAdp': u'2024-03-01 13:02:24.919556', u'ReturnCodeAdapter': 0}
+[I 2024-03-01 13:02:35.064 receipt:1611] beforeendtkt >>> _change_tkt_for_deduction : 0.003314
+[I 2024-03-01 13:02:35.064 receipt:1614] beforeendtkt >>> _change_tkt_for_imei : 0.000024
+[I 2024-03-01 13:02:35.065 receipt:1617] beforeendtkt >>> _update_tables_for_container_coupon : 0.000092
+[I 2024-03-01 13:02:35.065 receipt:1620] beforeendtkt >>> _persist_off_engine_entities : 0.000000
+[I 2024-03-01 13:02:35.065 receipt:2547] ... persist entity {u'active': 1}
+Traceback (most recent call last):
+  File "/home/orka/Appli/UI/orkpos5/orkpos/cli/stores/receipt.py", line 2548, in _persist_off_engine_entities
+    rows = getattr(self, entity)
+TypeError: getattr(): attribute name must be string
+[I 2024-03-01 13:02:35.066 receipt:1624] beforeendtkt >>> E - compat_orkpos5_6_1x
+[I 2024-03-01 13:02:35.066 servicesctrl:188] SERVICES_BNOIR_UPDATE_JRET_REQ
+[I 2024-03-01 13:02:35.067 rtadapterservice:120] checkReceipt jret {'screens': {}, 'invioTesseraSanitaria': 0, 'listTVA': [], 'tipoPos': 'STD', u'tsReqAdp': u'2024-03-01 13:02:24.919556', u'ReturnCodeAdapter': 0}
+[I 2024-03-01 13:02:35.069 notificationservice:16] ['screens', 'invioTesseraSanitaria', 'listTVA', 'tipoPos', u'tsReqAdp', u'ReturnCodeAdapter']
+[I 2024-03-01 13:02:35.070 posHandler:1388] Update UI
+[I 2024-03-01 13:02:35.070 uiclictrl:1678] UI_CLI_REFRESH_UI
+[I 2024-03-01 13:02:35.071 uiclictrl:684] on_UI_CLI_POS_BLOCK
+[I 2024-03-01 13:02:35.071 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': ['ATTESA AUTORIZZAZIONE..', ' '], 'ch': 'cashierDisplay'}
+[I 2024-03-01 13:02:35.072 uiclictrl:435] on_UI_CLI_CLEAR_INPUT
+[I 2024-03-01 13:02:35.073 uistore:58] on_UI_CLEAR_INPUT
+[I 2024-03-01 13:02:35.075 devicesctrl:1212] DEVICE_DESACTIVATE_SCANNERS
+[I 2024-03-01 13:02:35.075 devicesctrl:1213] scanners:0
+[I 2024-03-01 13:02:35.076 devicesctrl:1214] badgeScanners:0
+[I 2024-03-01 13:02:35.077 devicesctrl:1165] DEVICE_DESACTIVATE_BADGE_SCANNERS
+[I 2024-03-01 13:02:35.077 devicesctrl:1166] scanners:0
+[I 2024-03-01 13:02:35.077 devicesctrl:1167] badgeScanners:0
+[I 2024-03-01 13:02:35.078 posHandler:1467] Call RECEIPT_CHANGED
+[I 2024-03-01 13:02:35.078 uistore:424] on_RECEIPT_CHANGED({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>})
+[I 2024-03-01 13:02:35.079 uistore:386] SEND_CURRENT_RECEIPT({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>})
+[I 2024-03-01 13:02:35.080 posHandler:1469] Call REFRESH_CUSTOMER_DISPLAY
+[I 2024-03-01 13:02:35.083 coupongeneratorservice:46] Generated coupons: []
+[I 2024-03-01 13:02:35.083 servicesctrl:210] SERVICES_BNOIR_UPDATE_JRET_RESP
+[I 2024-03-01 13:02:35.084 enginectrl:398] ENGINE_BNOIR_UPDATE_JRET_RESP
+[I 2024-03-01 13:02:35.084 receiptservice:71] isEngineConnected() => True
+[E 2024-03-01 13:02:35.088 posHandler:668] ****************************** seq 83: action=requestpos, key=, table=, op=, bloc=, indice=, idcli=
+[I 2024-03-01 13:02:35.088 messageencodeservice:37] [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']
+[I 2024-03-01 13:02:35.089 messageencodeservice:43] message not present in ntt table
+[I 2024-03-01 13:02:35.089 posHandler:1388] Update UI
+[I 2024-03-01 13:02:35.090 uiclictrl:1678] UI_CLI_REFRESH_UI
+[I 2024-03-01 13:02:35.091 uiclictrl:729] on_UI_CLI_POS_UNBLOCKED
+[I 2024-03-01 13:02:35.092 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': ['4Store', 'ESSELUNGA'], 'ch': 'boxInfo'}
+[I 2024-03-01 13:02:35.094 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']}
+[I 2024-03-01 13:02:35.095 uiclictrl:435] on_UI_CLI_CLEAR_INPUT
+[I 2024-03-01 13:02:35.096 uistore:58] on_UI_CLEAR_INPUT
+[I 2024-03-01 13:02:35.098 uiclictrl:1511] ENGINE_STATE {u'ynpop': 0, u'ERR': 0, u'STDIN': 1, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 257, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 528, u'STYLECR': 528, u'idt': 282, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2}
+[I 2024-03-01 13:02:35.099 uiclictrl:1999] UI_CLI_UNLOCK_CONTEXT_UPDATE
+[I 2024-03-01 13:02:35.100 uiclictrl:4544] on_UI_SEND_TOTAL_ARTICLES
+[I 2024-03-01 13:02:35.102 uiclictrl:6181] on_UI_CLI_ACTIVATE_STD_BUTTONS
+[I 2024-03-01 13:02:35.103 posuiservice:630] ALTRI TOTALI {'ctx': 1, 'B.PASTO': Decimal('0'), 'B.CELIACHIA': Decimal('0')}
+[I 2024-03-01 13:02:35.104 posuiservice:616] _get_context_ux {u'ynpop': 0, u'ERR': 0, u'STDIN': 1, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 257, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 528, u'STYLECR': 528, u'idt': 282, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2} - 999999
+[W 2024-03-01 13:02:35.104 posuiservice:1988] _redirect_unmapped_ctx - trying to remap UI ctx to engine ctx...
+[I 2024-03-01 13:02:35.105 posuiservice:624] new ux context 999999
+[I 2024-03-01 13:02:35.106 posuiservice:608] S - _set_data_from_entry 999999
+[I 2024-03-01 13:02:35.107 uiclictrl:5923] on_UI_SEND_WS
+[I 2024-03-01 13:02:35.108 posuiservice:1714] is_card_already_in_use {}-None
+[I 2024-03-01 13:02:35.109 posHandler:1427] >> POS ask to DISABLE scanners <<
+[I 2024-03-01 13:02:35.110 devicesctrl:1212] DEVICE_DESACTIVATE_SCANNERS
+[I 2024-03-01 13:02:35.110 devicesctrl:1213] scanners:0
+[I 2024-03-01 13:02:35.111 devicesctrl:1214] badgeScanners:0
+[I 2024-03-01 13:02:35.112 devicesctrl:1165] DEVICE_DESACTIVATE_BADGE_SCANNERS
+[I 2024-03-01 13:02:35.113 devicesctrl:1166] scanners:0
+[I 2024-03-01 13:02:35.113 devicesctrl:1167] badgeScanners:0
+[I 2024-03-01 13:02:35.114 posHandler:1467] Call RECEIPT_CHANGED
+[I 2024-03-01 13:02:35.114 uistore:424] on_RECEIPT_CHANGED({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>})
+[I 2024-03-01 13:02:35.115 uistore:386] SEND_CURRENT_RECEIPT({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>})
+[I 2024-03-01 13:02:35.116 posHandler:1469] Call REFRESH_CUSTOMER_DISPLAY
+[E 2024-03-01 13:02:35.117 posHandler:668] ****************************** seq 84: action=update, key=, table=s_tkt, op=, bloc=, indice=, idcli=
+[E 2024-03-01 13:02:35.119 posHandler:668] ****************************** seq 85: action=info, key=ticket.end, table=, op=, bloc=, indice=, idcli=
+[I 2024-03-01 13:02:35.120 receipt:1564] beforeendtkt >>> S - compat_orkpos5_6_1x
+[I 2024-03-01 13:02:35.120 receipt:278] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is closed: True
+[I 2024-03-01 13:02:35.121 receipt:286] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is suspended: False
+[I 2024-03-01 13:02:35.121 receipt:302] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is aborted: False
+[I 2024-03-01 13:02:35.122 receipt:1575] beforeendtkt >>> _change_tkt_for_baskets : 0.001915
+[I 2024-03-01 13:02:35.123 receipt:1578] beforeendtkt >>> _change_tkt_for_pharma : 0.000451
+[I 2024-03-01 13:02:35.124 receipt:1581] beforeendtkt >>> _change_tkt_for_s_pay : 0.000084
+[I 2024-03-01 13:02:35.124 receipt:2065] Computing the TVA repartition ...
+[I 2024-03-01 13:02:35.124 receipt:1584] beforeendtkt >>> _insert_s_tva_in_tkt : 0.000446
+[I 2024-03-01 13:02:35.128 receipt:1587] beforeendtkt >>> _change_tkt_for_tva : 0.002845
+[I 2024-03-01 13:02:35.128 receipt:278] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is closed: True
+[I 2024-03-01 13:02:35.129 receipt:286] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is suspended: False
+[I 2024-03-01 13:02:35.129 receipt:302] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is aborted: False
+[I 2024-03-01 13:02:35.129 receipt:302] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is aborted: False
+[I 2024-03-01 13:02:35.132 receipt:1590] beforeendtkt >>> _insert_s_tkt_jret : 0.004095
+[I 2024-03-01 13:02:35.132 receipt:1593] beforeendtkt >>> _change_s_rtkt : 0.000078
+[I 2024-03-01 13:02:35.133 receipt:1596] beforeendtkt >>> _change_s_rfid_jret : 0.000020
+[I 2024-03-01 13:02:35.133 receipt:1599] beforeendtkt >>> _change_tkt_for_convrfid : 0.000020
+[I 2024-03-01 13:02:35.133 receipt:1602] beforeendtkt >>> _change_piccola_cassa_jret_on_cashmanager_pos : 0.000022
+[I 2024-03-01 13:02:35.134 receipt:1605] beforeendtkt >>> _insert_badge_in_s_auto : 0.000676
+[I 2024-03-01 13:02:35.138 receipt:1608] beforeendtkt >>> _change_tkt_for_omaggio : 0.002995
+[I 2024-03-01 13:02:35.138 receipt:2477] _change_tkt_for_deduction
+[I 2024-03-01 13:02:35.138 receipt:2479] checkReceipt jret {u'listTVA': [], u'invioTesseraSanitaria': 0, u'screens': {}, u'tipoPos': 'STD', u'tsReqAdp': u'2024-03-01 13:02:24.919556', u'ReturnCodeAdapter': 0}
+[I 2024-03-01 13:02:35.141 receipt:1611] beforeendtkt >>> _change_tkt_for_deduction : 0.003179
+[I 2024-03-01 13:02:35.141 receipt:1614] beforeendtkt >>> _change_tkt_for_imei : 0.000023
+[I 2024-03-01 13:02:35.142 receipt:1617] beforeendtkt >>> _update_tables_for_container_coupon : 0.000091
+[I 2024-03-01 13:02:35.142 receipt:1620] beforeendtkt >>> _persist_off_engine_entities : 0.000000
+[I 2024-03-01 13:02:35.142 receipt:2547] ... persist entity {u'active': 1}
+Traceback (most recent call last):
+  File "/home/orka/Appli/UI/orkpos5/orkpos/cli/stores/receipt.py", line 2548, in _persist_off_engine_entities
+    rows = getattr(self, entity)
+TypeError: getattr(): attribute name must be string
+[I 2024-03-01 13:02:35.143 receipt:1624] beforeendtkt >>> E - compat_orkpos5_6_1x
+[I 2024-03-01 13:02:35.143 receipt:1144] sign >> receipt (1,10034,2024-03-01,2,282)
+[I 2024-03-01 13:02:35.144 receipt:1205] sign >> previous receipt (1,10034,2024-03-01,2,281,200281)
+[I 2024-03-01 13:02:35.144 receipt:1215] sign >> computed signature is 200282
+[E 2024-03-01 13:02:35.151 posHandler:668] ****************************** seq 86: action=requestpos, key=, table=, op=, bloc=, indice=, idcli=
+[I 2024-03-01 13:02:35.151 messageencodeservice:37] [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']
+[I 2024-03-01 13:02:35.152 messageencodeservice:43] message not present in ntt table
+[I 2024-03-01 13:02:35.152 posHandler:1388] Update UI
+[I 2024-03-01 13:02:35.152 uiclictrl:1678] UI_CLI_REFRESH_UI
+[I 2024-03-01 13:02:35.153 uiclictrl:729] on_UI_CLI_POS_UNBLOCKED
+[I 2024-03-01 13:02:35.154 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': ['4Store', 'ESSELUNGA'], 'ch': 'boxInfo'}
+[I 2024-03-01 13:02:35.155 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': [u'  **CASSA CHIUSA**  ', u'01/03/24  V5.5.248.7']}
+[I 2024-03-01 13:02:35.156 uiclictrl:435] on_UI_CLI_CLEAR_INPUT
+[I 2024-03-01 13:02:35.157 uistore:58] on_UI_CLEAR_INPUT
+[I 2024-03-01 13:02:35.158 uiclictrl:1511] ENGINE_STATE {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 257, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 528, u'STYLECR': 528, u'idt': 282, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2}
+[I 2024-03-01 13:02:35.160 uiclictrl:1999] UI_CLI_UNLOCK_CONTEXT_UPDATE
+[I 2024-03-01 13:02:35.161 uiclictrl:4544] on_UI_SEND_TOTAL_ARTICLES
+[I 2024-03-01 13:02:35.162 uiclictrl:6181] on_UI_CLI_ACTIVATE_STD_BUTTONS
+[I 2024-03-01 13:02:35.163 posuiservice:630] ALTRI TOTALI {'ctx': 1, 'B.PASTO': Decimal('0'), 'B.CELIACHIA': Decimal('0')}
+[I 2024-03-01 13:02:35.163 posuiservice:616] _get_context_ux {u'ynpop': 0, u'ERR': 0, u'STDIN': 3587, u'CTX': 1, u'DRW': 0, u'nbart': 0, u'idh': 0, u'oaction': 0, u'GHOT': 0, u'dt': u'2024-03-01', u'RESTE': 0, u'TOTALAPA': 0, u'iderr': 0, u'VCS1': u'  **CASSA CHIUSA**  ', u'VCS2': u'01/03/24  V5.5.248.7', u'idreq': 0, u'idpop': 0, u'FLAGS': 0, u'FNCT': 0, u'TOTALNET': 0, u'TRS': 257, u'ARNDPA': 0, u'MSGERR': u'', u'ARNDREST': 0, u'VST': 528, u'STYLECR': 528, u'idt': 282, u'GTPV': 0, u'idwait': 0, u'idm': 10034, u'VCC1': u'  **CASSA CHIUSA**  ', u'VCC2': u'01/03/24  V5.5.248.7', u'_ac': u'requestpos', u'idc': 2} - 999999
+[W 2024-03-01 13:02:35.164 posuiservice:1988] _redirect_unmapped_ctx - trying to remap UI ctx to engine ctx...
+[I 2024-03-01 13:02:35.165 posuiservice:624] new ux context 999999
+[I 2024-03-01 13:02:35.166 posuiservice:608] S - _set_data_from_entry 999999
+[I 2024-03-01 13:02:35.166 uiclictrl:5923] on_UI_SEND_WS
+[I 2024-03-01 13:02:35.167 posuiservice:1714] is_card_already_in_use {}-None
+[I 2024-03-01 13:02:35.168 posHandler:1419] >> POS ask to ENABLE scanners <<
+[I 2024-03-01 13:02:35.168 devicesctrl:1192] DEVICE_ACTIVATE_SCANNERS
+[I 2024-03-01 13:02:35.169 devicesctrl:1193] scanners:0
+[I 2024-03-01 13:02:35.169 devicesctrl:1194] badgeScanners:0
+[I 2024-03-01 13:02:35.170 devicesctrl:1196] __cashDrawerStatus 0
+[I 2024-03-01 13:02:35.170 devicesctrl:1197] __cashDrawerStatusForPOS -1
+[I 2024-03-01 13:02:35.171 devicesctrl:1165] DEVICE_DESACTIVATE_BADGE_SCANNERS
+[I 2024-03-01 13:02:35.171 devicesctrl:1166] scanners:0
+[I 2024-03-01 13:02:35.172 devicesctrl:1167] badgeScanners:0
+[I 2024-03-01 13:02:35.172 posHandler:1461] Call RECEIPT_CHANGED
+[I 2024-03-01 13:02:35.172 uistore:424] on_RECEIPT_CHANGED({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>})
+[I 2024-03-01 13:02:35.173 uistore:386] SEND_CURRENT_RECEIPT({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>})
+[I 2024-03-01 13:02:35.174 posHandler:1463] Call REFRESH_CUSTOMER_DISPLAY
+[I 2024-03-01 13:02:35.175 enginectrl:123] on_EOT_START(), members: set(['receiptService', 'cashDrawer', 'printer', 'messages', 'scanner'])
+[I 2024-03-01 13:02:35.176 uiclictrl:929] on_EOT_MESSAGES({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>, 'messages': []})
+[I 2024-03-01 13:02:35.184 enginectrl:149] on_EOT_MESSAGES_CHECKED()
+[I 2024-03-01 13:02:35.184 uiclictrl:839] on_EOT_BEGIN
+[I 2024-03-01 13:02:35.186 uiclictrl:820] on_UI_CLI_EOT_POS_BLOCK
+[I 2024-03-01 13:02:35.187 devicesctrl:341] on_EOT_BEGIN({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>, 'members': set(['messages', 'receiptService', 'cashDrawer', 'scanner', 'printer'])})
+[I 2024-03-01 13:02:35.188 devicesctrl:1212] DEVICE_DESACTIVATE_SCANNERS
+[I 2024-03-01 13:02:35.189 devicesctrl:1213] scanners:0
+[I 2024-03-01 13:02:35.190 devicesctrl:1214] badgeScanners:0
+[I 2024-03-01 13:02:35.191 devicesctrl:1165] DEVICE_DESACTIVATE_BADGE_SCANNERS
+[I 2024-03-01 13:02:35.191 devicesctrl:1166] scanners:0
+[I 2024-03-01 13:02:35.192 devicesctrl:1167] badgeScanners:0
+[I 2024-03-01 13:02:35.193 enginectrl:83] on_EOT_DONE({'members': ['scanner']})
+[I 2024-03-01 13:02:35.194 enginectrl:104] EOTMembers : set(['receiptService', 'cashDrawer', 'printer', 'messages', 'scanner']), EOTMembersDone : set(['scanner'])
+[I 2024-03-01 13:02:35.195 uiclictrl:871] on_EOT_DONE >> {'members': ['scanner']}
+[I 2024-03-01 13:02:35.197 lightpoleservice:41] lightpole_red_on
+[I 2024-03-01 13:02:35.199 devicesctrl:531] on_DEVICE_GET_DRAWER_STATUS
+[I 2024-03-01 13:02:35.200 servicesctrl:427] on_EOT_BEGIN
+[I 2024-03-01 13:02:35.201 receiptservice:101] beginEOT(...)
+[I 2024-03-01 13:02:35.202 enginectrl:83] on_EOT_DONE({'members': ['receiptService']})
+[I 2024-03-01 13:02:35.203 enginectrl:104] EOTMembers : set(['receiptService', 'cashDrawer', 'printer', 'messages', 'scanner']), EOTMembersDone : set(['receiptService', 'scanner'])
+[I 2024-03-01 13:02:35.204 uiclictrl:871] on_EOT_DONE >> {'members': ['receiptService']}
+[I 2024-03-01 13:02:35.206 lightpoleservice:41] lightpole_red_on
+[I 2024-03-01 13:02:35.207 uiclictrl:2753] RECEIPT_FINISHED >> {'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>}
+[I 2024-03-01 13:02:35.208 storesctrl:157] on_RECEIPT_FINISHED :: {'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>}
+[I 2024-03-01 13:02:35.209 storesctrl:168]                 (1, 10034, u'2024-03-01', 2, 282)
+[I 2024-03-01 13:02:35.211 receipt:2999] toJSON
+[I 2024-03-01 13:02:35.212 receipt:2631] toPrintCmds True
+[I 2024-03-01 13:02:35.213 receipt:2657] Receipt type 911 is excluded for printing ...
+[I 2024-03-01 13:02:35.214 receipt:2661] Simulate void printing (no print commands) ...
+[I 2024-03-01 13:02:35.215 enginectrl:83] on_EOT_DONE({'members': ['printer']})
+[I 2024-03-01 13:02:35.217 enginectrl:104] EOTMembers : set(['receiptService', 'cashDrawer', 'printer', 'messages', 'scanner']), EOTMembersDone : set(['receiptService', 'scanner', 'printer'])
+[I 2024-03-01 13:02:35.218 uiclictrl:871] on_EOT_DONE >> {'members': ['printer']}
+[I 2024-03-01 13:02:35.220 lightpoleservice:41] lightpole_red_on
+[I 2024-03-01 13:02:35.222 uiclictrl:4231] DEVICE_PRINT_RECEIPT_FINISHED
+[I 2024-03-01 13:02:35.224 receipt:278] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is closed: True
+[I 2024-03-01 13:02:35.225 enginectrl:83] on_EOT_DONE({'members': ['cashDrawer']})
+[I 2024-03-01 13:02:35.226 enginectrl:104] EOTMembers : set(['receiptService', 'cashDrawer', 'printer', 'messages', 'scanner']), EOTMembersDone : set(['receiptService', 'cashDrawer', 'scanner', 'printer'])
+[I 2024-03-01 13:02:35.228 uiclictrl:871] on_EOT_DONE >> {'members': ['cashDrawer']}
+[I 2024-03-01 13:02:35.230 lightpoleservice:41] lightpole_red_on
+[I 2024-03-01 13:02:35.232 receipt:278] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is closed: True
+[I 2024-03-01 13:02:35.233 receipt:1418] SCONTRINO FISCALE
+[I 2024-03-01 13:02:35.235 devicesctrl:715] on_RECEIPT_FINISHED({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>})
+[I 2024-03-01 13:02:35.236 devicesctrl:567] on_DEVICE_PRINTER_STATUS({'status': 1, 'deviceType': 'Printer'})
+[I 2024-03-01 13:02:35.237 devicesctrl:604] [PRINTER] printing None
+[I 2024-03-01 13:02:35.239 receipt:2631] toPrintCmds False
+[I 2024-03-01 13:02:35.240 servicesctrl:414] RECEIPT_FINISHED
+[W 2024-03-01 13:02:35.241 enginemanager:826] EngineManager instance has no attribute '_EngineManager__receipt'
+[I 2024-03-01 13:02:35.242 servicesctrl:531] Custom ticket in queue: 0, creation allowed: True
+[I 2024-03-01 13:02:35.243 devicesctrl:185] WebSocketJPOS javapos on_message {u'status': 0, u'stateLabel': u'', u'deviceModel': u'CashDrawer', u'rawStatus': -1, u'state': 1, u'statusLabel': u'', u'deviceType': u'CashDrawer', u'deviceId': 0, u'taskId': u'', u'rawStatusLabel': u'', u'deviceLogicalName': u'CashDrawer'}, localhost
+[I 2024-03-01 13:02:35.244 enginectrl:488] DEVICE_DRAWER_STATUS({u'status': 0, u'stateLabel': u'', u'deviceModel': u'CashDrawer', u'rawStatus': -1, u'state': 1, u'statusLabel': u'', u'deviceType': u'CashDrawer', u'deviceId': 0, u'taskId': u'', u'rawStatusLabel': u'', u'deviceLogicalName': u'CashDrawer'})
+[I 2024-03-01 13:02:35.244 devicesctrl:402] on_DEVICE_DRAWER_STATUS({u'status': 0, u'stateLabel': u'', u'deviceModel': u'CashDrawer', u'rawStatus': -1, u'state': 1, u'statusLabel': u'', u'deviceType': u'CashDrawer', u'deviceId': 0, u'taskId': u'', u'rawStatusLabel': u'', u'deviceLogicalName': u'CashDrawer'})
+[I 2024-03-01 13:02:35.245 enginectrl:83] on_EOT_DONE({'members': ['cashDrawer']})
+[I 2024-03-01 13:02:35.245 enginectrl:104] EOTMembers : set(['receiptService', 'cashDrawer', 'printer', 'messages', 'scanner']), EOTMembersDone : set(['receiptService', 'cashDrawer', 'scanner', 'printer'])
+[I 2024-03-01 13:02:35.246 uiclictrl:871] on_EOT_DONE >> {'members': ['cashDrawer']}
+[I 2024-03-01 13:02:35.247 lightpoleservice:41] lightpole_red_on
+[I 2024-03-01 13:02:35.254 enginectrl:83] on_EOT_DONE({'members': ['messages']})
+[I 2024-03-01 13:02:35.255 enginectrl:94] All members are ready, triggers EOT_END
+[I 2024-03-01 13:02:35.256 enginectrl:164] on_EOT_END()
+[I 2024-03-01 13:02:35.256 uiclictrl:1085] on_EOT_END({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>})
+[I 2024-03-01 13:02:35.257 uiclictrl:829] on_UI_CLI_EOT_POS_UNBLOCK
+[I 2024-03-01 13:02:35.258 uiclictrl:729] on_UI_CLI_POS_UNBLOCKED
+[I 2024-03-01 13:02:35.259 instantwinservice:103] S - abort_instant_win
+[I 2024-03-01 13:02:35.260 instantwinservice:108] No instantwin idVincita in current receipt
+[I 2024-03-01 13:02:35.260 instantwinservice:109] E - abort_instant_win
+[I 2024-03-01 13:02:35.261 uiclictrl:1113] _lastreceipt abortReason None
+[I 2024-03-01 13:02:35.262 lightpoleservice:41] lightpole_red_on
+[I 2024-03-01 13:02:35.263 uiclictrl:313] on_UI_CLI_SCO_REDIRECT_INPUT >> {}
+[I 2024-03-01 13:02:35.264 enginectrl:291] on_ENGINE_REDIRECT_INPUT_DATA_STOP_REQ({})
+[I 2024-03-01 13:02:35.265 enginectrl:271] on_ENGINE_REDIRECT_INPUT_DATA_START_REQ({'inputDataCallback': <bound method UICliComponent.verify_input of UICliComponent>})
+[I 2024-03-01 13:02:35.266 uiclictrl:1886] UI_CLI_RESET_UI >> {}
+[I 2024-03-01 13:02:35.267 devicesctrl:1192] DEVICE_ACTIVATE_SCANNERS
+[I 2024-03-01 13:02:35.268 devicesctrl:1193] scanners:0
+[I 2024-03-01 13:02:35.268 devicesctrl:1194] badgeScanners:0
+[I 2024-03-01 13:02:35.269 devicesctrl:1196] __cashDrawerStatus 0
+[I 2024-03-01 13:02:35.270 devicesctrl:1197] __cashDrawerStatusForPOS -1
+[I 2024-03-01 13:02:35.271 devicesctrl:1192] DEVICE_ACTIVATE_SCANNERS
+[I 2024-03-01 13:02:35.272 devicesctrl:1193] scanners:0
+[I 2024-03-01 13:02:35.273 devicesctrl:1194] badgeScanners:0
+[I 2024-03-01 13:02:35.273 devicesctrl:1196] __cashDrawerStatus 0
+[I 2024-03-01 13:02:35.274 devicesctrl:1197] __cashDrawerStatusForPOS -1
+[I 2024-03-01 13:02:35.275 uiclictrl:1943] UI_CLI_SEND_MESSAGE_TO_CHANNEL >> {'msg': ['4Store', 'ESSELUNGA'], 'ch': 'boxInfo'}
+[I 2024-03-01 13:02:35.277 poscheckalcol:22] reset alcol service
+[I 2024-03-01 13:02:35.278 devicesctrl:359] on_EOT_END({'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710>})
+[I 2024-03-01 13:02:35.279 devicesctrl:1212] DEVICE_DESACTIVATE_SCANNERS
+[I 2024-03-01 13:02:35.279 devicesctrl:1213] scanners:0
+[I 2024-03-01 13:02:35.280 devicesctrl:1214] badgeScanners:0
+[I 2024-03-01 13:02:35.281 devicesctrl:1165] DEVICE_DESACTIVATE_BADGE_SCANNERS
+[I 2024-03-01 13:02:35.281 devicesctrl:1166] scanners:0
+[I 2024-03-01 13:02:35.282 devicesctrl:1167] badgeScanners:0
+[I 2024-03-01 13:02:35.282 servicesctrl:436] on_EOT_END
+[I 2024-03-01 13:02:35.283 receiptservice:113] endEOT(...)
+[I 2024-03-01 13:02:35.284 servicesctrl:506] SERVICES_UNLOCK_CUSTOM_TICKET_CREATION {'event': 'ticket.end'}
+[I 2024-03-01 13:02:35.284 enginectrl:249] on_UI_SEND_KEY {'key': 69}
+[I 2024-03-01 13:02:35.285 posHandler:1557] doSendKey(...)
+[I 2024-03-01 13:02:35.285 posHandler:1580] sendCmd(...)
+[I 2024-03-01 13:02:35.286 uiclictrl:3096] verify input {'receipt': <orkpos.cli.stores.receipt.Receipt instance at 0x7f37166c51b8>, 'data': {'qte': u'', u'scan': 0, u'typscan': 3, 'ean': '', u'typcode': 255, 'fnc': '69', u'tiroir': 0, 'trs': u'17'}, 'continueCallback': <bound method OrkposWebSocketClient.send of <orkpos.engine.posHandler.OrkposWebSocketClient object at 0x7f3716537f10>>} pos STD
+[I 2024-03-01 13:02:35.287 uiclictrl:3218] is_engine_in_error: 0, is_authorization_required: False is_asking: False
+[I 2024-03-01 13:02:35.288 uiclictrl:871] on_EOT_DONE >> {'members': ['messages']}
+[I 2024-03-01 13:02:35.289 lightpoleservice:41] lightpole_red_on
+[I 2024-03-01 13:02:35.314 receipt:3094] sendCmdsToTestPrinter(url=http://localhost:4321/receipt,...)
+[I 2024-03-01 13:02:35.320 devicesctrl:185] WebSocketJPOS javapos on_message {u'status': 2, u'stateLabel': u'', u'deviceModel': u'POSPrinter', u'rawStatus': -1, u'state': 2, u'statusLabel': u'', u'deviceType': u'Printer', u'deviceId': 0, u'taskId': u'null', u'rawStatusLabel': u'', u'deviceLogicalName': u'POSPrinter'}, localhost
+[I 2024-03-01 13:02:35.321 devicesctrl:567] on_DEVICE_PRINTER_STATUS({u'status': 2, u'stateLabel': u'', u'deviceModel': u'POSPrinter', u'rawStatus': -1, u'state': 2, u'statusLabel': u'', u'deviceType': u'Printer', u'deviceId': 0, u'taskId': u'null', u'rawStatusLabel': u'', u'deviceLogicalName': u'POSPrinter'})
+[I 2024-03-01 13:02:35.321 devicesctrl:612] [PRINTER] receipt printed null
+[I 2024-03-01 13:02:35.322 enginectrl:83] on_EOT_DONE({'members': ['printer']})
+[I 2024-03-01 13:02:35.323 uiclictrl:871] on_EOT_DONE >> {'members': ['printer']}
+[I 2024-03-01 13:02:35.324 lightpoleservice:41] lightpole_red_on
+[I 2024-03-01 13:02:35.325 uiclictrl:4231] DEVICE_PRINT_RECEIPT_FINISHED
+[I 2024-03-01 13:02:35.326 receipt:278] <orkpos.cli.stores.receipt.Receipt instance at 0x7f3716535710> is closed: True
+[I 2024-03-01 13:02:35.361 vat:25] consolidate
+[I 2024-03-01 13:02:35.365 payment:25] consolidate
+[I 2024-03-01 13:02:35.425 storesctrl:244] __extractConso
+[I 2024-03-01 13:02:35.425 brokerctrl:183] on_STORES_END_CONSOLIDATE
+[I 2024-03-01 13:02:35.433 uiclictrl:4399] {'status': 0, 'data': 0, 'event': 'CLI_CONTEXT_CHANGED'}
+[I 2024-03-01 13:02:35.891 ascentmanager:973] Processing ascent receipt 2ab25e9e-655f-497c-849e-5849f3e454f6
+[E 2024-03-01 13:02:35.893 ascentmanager:1014] Ascending the receipt 2ab25e9e-655f-497c-849e-5849f3e454f6
+[I 2024-03-01 13:02:35.894 ascentmanager:1018] Sending receipt at http://sorkaisse:8889/orkaisse/ascent/receipt/add
+[E 2024-03-01 13:02:35.910 ascentmanager:1022] Removing the receipt 2ab25e9e-655f-497c-849e-5849f3e454f6 from cache
+[I 2024-03-01 13:02:35.951 web:2064] 200 POST /orkpos/ascent/receipt/chksrv (10.118.3.135) 6.46ms
+[I 2024-03-01 13:02:37.104 uiclictrl:6084] on_UI_ENABLE_SCO_REREAD
+[I 2024-03-01 13:02:37.164 uiclictrl:6084] on_UI_ENABLE_SCO_REREAD
+[I 2024-03-01 13:02:39.948 uiclictrl:2216] FISCAL - UI_CLI_FISCAL_ADAPTER_STATUS
+[I 2024-03-01 13:02:45.244 servicesctrl:531] Custom ticket in queue: 0, creation allowed: True
+[I 2024-03-01 13:02:46.359 posHandler:466] WebSocket closed <orkpos.engine.posHandler.OrkPosHandler object at 0x7f3716d90ed0>, code: None, reason: None
