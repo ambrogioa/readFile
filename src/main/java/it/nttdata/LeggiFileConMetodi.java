@@ -9,6 +9,8 @@ import java.util.regex.Pattern;
 public class LeggiFileConMetodi {
 
     private static Map<String, Runnable> keywordActions = new HashMap<>();
+
+    //PIPP
     public LeggiFileConMetodi() {}
 
     public Map<String, Runnable> creaMappa() {
