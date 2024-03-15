@@ -93,11 +93,7 @@ public class CashdeskDay {
 
                 for (String parolaChiave : creaMappa().keySet()) {
                     if (riga.contains(parolaChiave)) {
-                        //creaMappa().get(parolaChiave).run();
-                        //System.out.println("---CHIAVE ASSOCIATA---" + creaMappa().get(parolaChiave));
-                        //System.out.println("Riga trovata: " + riga);
                         rigaParsata = parseString(riga);
-                        //System.out.println("Riga parsata: " + rigaParsata);
                         actionExecutor(creaMappa().get(parolaChiave), rigaParsata);
                     }
                 }
